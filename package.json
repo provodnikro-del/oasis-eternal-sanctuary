@@ -1,7 +1,7 @@
 {
   "name": "oasis-eternal-sanctuary",
-  "version": "0.6.0",
-  "description": "Oasis Eternal Sanctuary — AI tamagotchi civilization",
+  "version": "0.7.0",
+  "description": "Oasis Eternal Sanctuary \u2014 AI tamagotchi civilization",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -10,6 +10,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "ws": "^8.16.0"
+    "ws": "^8.16.0",
+    "composio-core": "^0.5.39"
   }
 }
