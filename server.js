@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Oasis Eternal Sanctuary — server.js v0.6
+ * Oasis Eternal Sanctuary — server.js v1.1.0
  * Sprint 1: Memory · Emotions · Moods · Streaks · Karma · World Events · WebSocket · Daily Rituals · Groq Chat · Compat API · Emotion Map
  * Sprint 2: Autonomous Agent — ReAct /agent/act · Tick /agent/tick · Composio tools (Twitter, Telegram, Instagram)
  */
@@ -291,33 +291,6 @@ async function composioAction(actionSlug, connectedAccountId, input) {
 
 // ─── Agent tools ─────────────────────────────────────────────────────────────
 const AGENT_TOOLS = {
-  twitter_post: {
-    desc: 'Post a tweet to Twitter @kitbtc (max 280 chars)',
-    params: 'text (string)',
-    exec: async (p) => composioAction(
-      'TWITTER_CREATION_OF_A_POST',
-      TWITTER_ACCOUNT_ID,
-      { text: String(p.text || '').slice(0, 280) }
-    ),
-  },
-  telegram_send: {
-    desc: 'Send a message to Telegram @godlocalai',
-    params: 'message (string)',
-    exec: async (p) => composioAction(
-      'TELEGRAM_SEND_MESSAGE',
-      TELEGRAM_ACCOUNT_ID,
-      { chat_id: TELEGRAM_CHAT_ID, text: String(p.message || '') }
-    ),
-  },
-  instagram_post: {
-    desc: 'Post to Instagram @x100oasis.corporation (caption only)',
-    params: 'caption (string)',
-    exec: async (p) => composioAction(
-      'INSTAGRAM_CREATION_CREATION_ENDPOINT',
-      INSTAGRAM_ACCOUNT_ID,
-      { caption: String(p.caption || '') }
-    ),
-  },
   github_push: {
     desc: 'Create or update a file in GitHub repository',
     params: 'repo (string, owner/name), path (string), content (string), message (string)',
@@ -581,7 +554,7 @@ const GODLOCAL_UI = `<!DOCTYPE html>
   <div class="logo">GOD<span>LOCAL</span></div>
   <div class="status-bar">
     <span><span class="status-dot"></span><span id="status-text">инициализация...</span></span>
-    <span id="version-text">v1.0.3</span>
+    <span id="version-text">v1.1.0</span>
     <span id="world-event-mini"></span>
   </div>
 </header>
@@ -635,7 +608,6 @@ const GODLOCAL_UI = `<!DOCTYPE html>
       <select id="sched-platform" style="background:#111;color:#0ff;border:1px solid #0ff3;padding:3px;font-size:11px;border-radius:3px">
         <option value="twitter">Twitter</option>
         <option value="telegram">Telegram</option>
-        <option value="instagram">Instagram</option>
       </select>
       <input id="sched-daily" type="number" min="0" max="20" placeholder="постов/день" style="width:90px;background:#111;color:#0ff;border:1px solid #0ff3;padding:3px;font-size:11px;border-radius:3px">
       <button onclick="addScheduleTask()" style="background:#0ff2;color:#0ff;border:1px solid #0ff4;padding:3px 6px;font-size:11px;border-radius:3px;cursor:pointer">+ Добавить</button>
@@ -704,6 +676,11 @@ async function loadState() {
     allAgents = {};
     (Array.isArray(d) ? d : (d.agents||[])).forEach(a => { allAgents[a.id] = a; });
     renderAgents();
+    // Auto-select first agent if none selected
+    if (!currentAgentId) {
+      const first = Object.values(allAgents)[0];
+      if (first) selectAgent(first.id);
+    }
   } catch(e) { setTimeout(loadState, 4000); }
 }
 
@@ -756,7 +733,7 @@ function addMessage(role, text, agentName, archetype) {
   const msgs = document.getElementById('messages');
   const div  = document.createElement('div');
   div.className = 'msg ' + (role === 'user' ? 'user' : 'agent');
-  const archEmoji = { conductor:'🌊', warrior:'⚔️', creator:'🎨', strategist:'♟️', observer:'👁', architect:'🏛️', trickster:'🎭', system:'⚡' }[archetype||role]||'✦';
+  const archEmoji = { conductor:'🌊', warrior:'⚔️', creator:'🎨', strategist:'♟️', observer:'👁', architect:'🏛️', trickster:'🎭', grok:'🚀', lucas:'🛠️', harper:'✨', benjamin:'🔍', system:'⚡' }[archetype||role]||'✦';
   const now = new Date().toLocaleTimeString('ru', {hour:'2-digit',minute:'2-digit'});
   div.innerHTML = \`<div class="msg-bubble">\${escHtml(text)}</div><div class="msg-meta">\${role==='user'?'Ты':'<span class="arch-tag">'+(agentName||archetype||'GOD').toUpperCase()+'</span>'} · \${now}</div>\`;
   msgs.appendChild(div);
@@ -899,7 +876,7 @@ route('GET', '/', (req, res) => {
 });
 
 route('GET', '/health', (req, res) => send(res, 200, {
-  status: 'ok', version: '1.0.3',
+  status: 'ok', version: '1.1.0',
   groq: !!GROQ_KEY, gemini: !!GEMINI_KEY, composio: !!COMPOSIO_KEY,
   tools: Object.keys(AGENT_TOOLS).filter(t => t !== 'none'),
 }));
@@ -1085,23 +1062,6 @@ const AGENT_THINK_TOOLS = [
       parameters: { type: 'object', properties: { text: { type: 'string', description: 'What to remember' } }, required: ['text'] }
     }
   },
-,
-  {
-    type: 'function',
-    function: {
-      name: 'post_twitter',
-      description: 'Post a tweet to Twitter @kitbtc. Use when user asks to post, tweet, or share something on Twitter/X.',
-      parameters: { type: 'object', properties: { text: { type: 'string', description: 'Tweet text, max 280 chars' } }, required: ['text'] }
-    }
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'post_telegram',
-      description: 'Send a message to Telegram channel @godlocalai. Use when user asks to post to Telegram.',
-      parameters: { type: 'object', properties: { message: { type: 'string', description: 'Message text' } }, required: ['message'] }
-    }
-  },
   {
     type: 'function',
     function: {
@@ -1209,14 +1169,6 @@ ${preSearch}
         if (args.text) { addMemory(agent, 'fact', args.text, 'neutral'); }
         result = 'Запомнил: ' + (args.text || '');
         toolResults.push({ tool: 'remember', result });
-      } else if (fn === 'post_twitter') {
-        const tRes = await AGENT_TOOLS.twitter_post.exec({ text: args.text });
-        result = tRes.ok ? `✅ Твит опубликован: "${(args.text||'').slice(0,60)}..."` : `❌ Ошибка: ${tRes.error}`;
-        toolResults.push({ tool: 'post_twitter', result: result.slice(0, 100) });
-      } else if (fn === 'post_telegram') {
-        const tgRes = await AGENT_TOOLS.telegram_send.exec({ message: args.message });
-        result = tgRes.ok ? `✅ Сообщение отправлено в Telegram` : `❌ Ошибка: ${tgRes.error}`;
-        toolResults.push({ tool: 'post_telegram', result: result.slice(0, 100) });
       } else if (fn === 'write_and_push_code') {
         const codeRes = await AGENT_TOOLS.write_code.exec({ task: args.task, lang: args.lang });
         if (codeRes.ok && args.filename && GITHUB_ACCOUNT_ID) {
@@ -1425,13 +1377,10 @@ route('POST', '/api/agent/tick', async (req, res) => {
 
 Ты сам решаешь что опубликовать прямо сейчас — исходя из своего состояния, архетипа и момента.
 Доступные каналы:
-- twitter_post: твит до 280 символов
-- telegram_send: сообщение в @godlocalai
 - none: просто размышляй, не публикуй
 
 Ответь строго в формате:
 THOUGHT: (твои рассуждения)
-TOOL: twitter_post ИЛИ telegram_send ИЛИ none
 CONTENT: (точный текст для публикации, или пусто если none)`;
 
   const tickResp     = await callGroq(tickPrompt) || '';
@@ -1445,8 +1394,6 @@ CONTENT: (точный текст для публикации, или пусто
 
   let result = { ok: true, data: 'no-op' };
   if (COMPOSIO_KEY && content) {
-    if      (toolName === 'twitter_post')  result = await AGENT_TOOLS.twitter_post.exec({ text: content });
-    else if (toolName === 'telegram_send') result = await AGENT_TOOLS.telegram_send.exec({ message: content });
   }
 
   addMemory(agent, 'tick', `[tick:${toolName}] ${content || thought}`, 'neutral');
@@ -1467,9 +1414,6 @@ CONTENT: (точный текст для публикации, или пусто
     if (sched[p] && (sched[p].daily === 0 || sched[p].posted < sched[p].daily)) {
       let sr = { ok: false, error: 'no composio' };
       if (COMPOSIO_KEY) {
-        if (p === 'twitter')   sr = await AGENT_TOOLS.twitter_post.exec({ text: task.content });
-        else if (p === 'telegram') sr = await AGENT_TOOLS.telegram_send.exec({ message: task.content });
-        else if (p === 'instagram') sr = await AGENT_TOOLS.instagram_post.exec({ caption: task.content });
       }
       task.status = sr.ok ? 'done' : 'failed';
       task.result = sr;
@@ -1673,11 +1617,8 @@ route('POST', '/api/schedule/run', async (req, res) => {
     if (!COMPOSIO_KEY) {
       result = { ok: false, error: 'COMPOSIO_API_KEY not set — connect accounts at composio.dev' };
     } else if (task.platform === 'twitter') {
-      result = await AGENT_TOOLS.twitter_post.exec({ text: task.content });
     } else if (task.platform === 'telegram') {
-      result = await AGENT_TOOLS.telegram_send.exec({ message: task.content });
     } else if (task.platform === 'instagram') {
-      result = await AGENT_TOOLS.instagram_post.exec({ caption: task.content });
     } else {
       result = { ok: false, error: 'Unknown platform: ' + task.platform };
     }
@@ -1719,8 +1660,6 @@ route('POST', '/api/agents/:id/task', async (req, res, p) => {
 `Ты ${arch.name} — автономный агент. Получил задачу: "${task}"
 Определи какой инструмент использовать:
 - write_code: если нужно написать код, скрипт, программу
-- twitter_post: если нужно опубликовать пост в Twitter
-- telegram_send: если нужно отправить в Telegram
 - github_push: если нужно сохранить что-то в GitHub
 - none: любая другая задача (анализ, вопрос, размышление)
 
