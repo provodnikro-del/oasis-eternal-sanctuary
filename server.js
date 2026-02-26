@@ -233,7 +233,7 @@ async function composioAction(actionSlug, connectedAccountId, input) {
     const body = JSON.stringify({ connectedAccountId, input });
     const https = require('https');
     const options = {
-      hostname: 'backend.composio.tech',
+      hostname: 'backend.composio.dev',
       path: `/api/v1/actions/${actionSlug}/execute`,
       method: 'POST',
       headers: {
