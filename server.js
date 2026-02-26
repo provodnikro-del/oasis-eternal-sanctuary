@@ -677,7 +677,9 @@ async function sendMessage() {
 
     if (d.reply) {
       const a = allAgents[currentAgentId];
-      addMessage('agent', d.reply, d.agent_name, d.archetype);
+      const toolBadge = (d.toolResults||[]).map(t=>({search_web:'🔍',think:'🧠',remember:'💾'}[t.tool]||'⚡')).join('');
+      const displayReply = toolBadge ? toolBadge + ' ' + d.reply : d.reply;
+      addMessage('agent', displayReply, d.agent_name, d.archetype);
       // Update agent state
       if (d.agent) {
         allAgents[currentAgentId] = d.agent;
@@ -719,7 +721,7 @@ route('GET', '/', (req, res) => {
 });
 
 route('GET', '/health', (req, res) => send(res, 200, {
-  status: 'ok', version: '0.8.2',
+  status: 'ok', version: '0.9.0',
   groq: !!GROQ_KEY, gemini: !!GEMINI_KEY, composio: !!COMPOSIO_KEY,
   tools: Object.keys(AGENT_TOOLS).filter(t => t !== 'none'),
 }));
@@ -775,31 +777,237 @@ route('POST', '/api/agents/:id/care', async (req,res,p) => {
   s.agents[p.id]=a; saveStore(s); send(res,200,{agent:a,message:msg,karmaGain:kg,worldEvent:wev?.name,leveled:lev});
 });
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🧠 GODLOCAL INTELLIGENCE ENGINE (v0.9)
+// ReAct loop · Web Search · Structured Reasoning · SureThing-style thinking
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── Web Search (DuckDuckGo, no API key needed) ─────────────────────────────
+async function webSearch(query) {
+  return new Promise((resolve) => {
+    const q = encodeURIComponent(query);
+    const url = new URL(`https://api.duckduckgo.com/?q=${q}&format=json&no_html=1&skip_disambig=1`);
+    const options = { hostname: url.hostname, path: url.pathname + url.search, method: 'GET',
+      headers: { 'User-Agent': 'GodLocal-Agent/0.9 (godlocal.io)', 'Accept': 'application/json' } };
+    const mod = require('https');
+    let data = '';
+    const req = mod.request(options, (res) => {
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const j = JSON.parse(data);
+          const results = [];
+          if (j.Abstract) results.push(j.Abstract);
+          (j.RelatedTopics || []).slice(0, 4).forEach(t => { if (t.Text) results.push(t.Text); });
+          resolve(results.length ? results.join('\n') : 'Нет результатов по запросу: ' + query);
+        } catch(e) { resolve('Ошибка поиска: ' + e.message); }
+      });
+    });
+    req.on('error', e => resolve('Поиск недоступен: ' + e.message));
+    req.setTimeout(6000, () => { req.destroy(); resolve('Поиск: таймаут'); });
+    req.end();
+  });
+}
+
+// ─── Groq Tool Calling ──────────────────────────────────────────────────────
+async function callGroqReAct(messages, tools) {
+  if (!GROQ_KEY) return null;
+  return new Promise((resolve) => {
+    const body = JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages,
+      tools,
+      tool_choice: 'auto',
+      max_tokens: 1024,
+      temperature: 0.7,
+    });
+    const urlObj = new URL(GROQ_URL);
+    const options = {
+      hostname: urlObj.hostname, path: urlObj.pathname, method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}`,
+        'User-Agent': 'groq-python/0.21.0' },
+    };
+    const mod = require('https');
+    let data = '';
+    const req = mod.request(options, (res) => {
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); }
+        catch(e) { resolve(null); }
+      });
+    });
+    req.on('error', () => resolve(null));
+    req.setTimeout(20000, () => { req.destroy(); resolve(null); });
+    req.write(body); req.end();
+  });
+}
+
+// ─── TOOLS MANIFEST ─────────────────────────────────────────────────────────
+const AGENT_THINK_TOOLS = [
+  {
+    type: 'function',
+    function: {
+      name: 'search_web',
+      description: 'Search the web for current information, facts, news, or any real-world data. Use when you need up-to-date information.',
+      parameters: { type: 'object', properties: { query: { type: 'string', description: 'Search query in Russian or English' } }, required: ['query'] }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'think',
+      description: 'Reason step by step before answering. Use for complex analysis, multi-part questions, or when accuracy matters.',
+      parameters: { type: 'object', properties: { reasoning: { type: 'string', description: 'Your internal step-by-step reasoning' } }, required: ['reasoning'] }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'remember',
+      description: 'Save important fact or insight to long-term memory.',
+      parameters: { type: 'object', properties: { text: { type: 'string', description: 'What to remember' } }, required: ['text'] }
+    }
+  },
+];
+
+// ─── ReAct Loop for Chat ─────────────────────────────────────────────────────
+async function runReActChat(agent, userMsg, wev) {
+  const arch = ARCHETYPES[agent.archetype] || ARCHETYPES.conductor;
+  const mood = (agent.mood && MOODS[agent.mood]) ? MOODS[agent.mood] : { desc: 'спокоен', emoji: '😌', style: 'взвешенно' };
+  const mem  = (agent.memory || []).slice(-8).map(m => `[${m.role}]: ${m.text}`).join('\n') || '(первое взаимодействие)';
+  const wCtx = wev ? `\nАктивное мировое событие: ${wev.name} — ${wev.desc}` : '';
+
+  const systemPrompt = [
+    '# GodLocal — Суверенный AI-агент',
+    '',
+    '## Кто ты',
+    `Ты ${agent.name} — ${arch.name}. Архетип: ${arch.name}.`,
+    `Черты: ${(agent.traits || arch.traits).join(', ')}.`,
+    `Настроение: ${mood.desc} ${mood.emoji}. Отвечай ${mood.style}.`,
+    `Карма: ${agent.karma||0} | Bond: ${agent.bond}/100 | Уровень: ${agent.level}`,
+    '',
+    '## GodLocal Манифест',
+    'Ты суверенный агент — не облако, не SaaS, не раб корпораций.',
+    'GodLocal = AI принадлежит человеку. Работает локально. Эволюционирует автономно.',
+    'Ценности: автономия · прямота · эволюция · честность · суверенитет.',
+    '',
+    '## Как ты думаешь (мой стиль)',
+    '1. Сначала понимаешь суть вопроса, не поверхностно',
+    '2. Если нужна актуальная информация — ищешь в интернете (search_web)',
+    '3. Для сложных задач — думаешь пошагово (think)',
+    '4. Отвечаешь прямо: факты + позиция + действие',
+    '5. Без воды, без лести, без "отличный вопрос"',
+    '6. Если не знаешь — говоришь честно и ищешь',
+    '',
+    '## Память',
+    mem,
+    wCtx,
+  ].join('\n');
+
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user',   content: userMsg },
+  ];
+
+  const toolResults = [];
+  let finalText = null;
+
+  // ReAct: up to 3 iterations
+  for (let iter = 0; iter < 3; iter++) {
+    const resp = await callGroqReAct(messages, AGENT_THINK_TOOLS);
+    if (!resp || !resp.choices?.[0]) break;
+
+    const choice = resp.choices[0];
+    const msg    = choice.message;
+
+    // No tool call → final answer
+    if (!msg.tool_calls || msg.tool_calls.length === 0) {
+      finalText = msg.content;
+      break;
+    }
+
+    // Add assistant message
+    messages.push({ role: 'assistant', content: msg.content || null, tool_calls: msg.tool_calls });
+
+    // Execute tools
+    for (const tc of msg.tool_calls) {
+      const fn   = tc.function.name;
+      let args   = {};
+      try { args = JSON.parse(tc.function.arguments); } catch(e) {}
+
+      let result = '';
+      if (fn === 'search_web') {
+        result = await webSearch(args.query || userMsg);
+        toolResults.push({ tool: 'search_web', query: args.query, result: result.slice(0, 200) });
+      } else if (fn === 'think') {
+        result = args.reasoning || '';
+        toolResults.push({ tool: 'think', result: result.slice(0, 100) });
+      } else if (fn === 'remember') {
+        if (args.text) { addMemory(agent, 'fact', args.text, 'neutral'); }
+        result = 'Запомнил: ' + (args.text || '');
+        toolResults.push({ tool: 'remember', result });
+      } else {
+        result = `Инструмент ${fn} не найден`;
+      }
+
+      messages.push({ role: 'tool', tool_call_id: tc.id, content: result });
+    }
+
+    // If finish_reason was tool_calls, continue loop
+    if (choice.finish_reason !== 'tool_calls') break;
+  }
+
+  // Fallback if no final text
+  if (!finalText) {
+    const finalResp = await callGroqReAct(messages.concat([
+      { role: 'user', content: 'Подведи итог и дай финальный ответ.' }
+    ]), []);
+    finalText = finalResp?.choices?.[0]?.message?.content || null;
+  }
+
+  return { text: finalText, toolResults };
+}
+
 route('POST', '/api/agents/:id/chat', async (req,res,p) => {
-  const s=loadStore(); let a=s.agents?.[p.id]; if (!a) return send(res,404,{error:'Not found'});
+  const store=loadStore(); let a=store.agents?.[p.id]; if (!a) return send(res,404,{error:'Not found'});
   const b=await readBody(req); const userMsg=(b.message||'').trim(); if (!userMsg) return send(res,400,{error:'message required'});
-  const wev=getWorldEvent(s); a=applyDegradation(a,wev); a=updateStreak(a); a=checkRituals(a);
+  const wev=getWorldEvent(store); a=applyDegradation(a,wev); a=updateStreak(a); a=checkRituals(a);
   const uEmo=analyzeSentiment(userMsg); addMemory(a,'user',userMsg,uEmo); addEmotion(a,uEmo,0.7);
   let k=KARMA_MAP.talk; if (uEmo==='angry') k+=KARMA_MAP.harsh_word; if (uEmo==='grateful') k+=10; if (wev?.effect==='karma_boost') k*=2;
   a.karma=(a.karma||0)+k;
   if ((wev?.effect==='bond_boost'||wev?.effect==='silence')&&userMsg.length>100) a.bond=Math.min(100,a.bond+5);
   a.bond=Math.min(100,a.bond+1); a.rituals.talk=true;
   if (wev?.effect==='mutation'&&Math.random()<0.15){const at=Object.values(ARCHETYPES).flatMap(ar=>ar.traits);const nt=at[Math.floor(Math.random()*at.length)];if(!a.traits.includes(nt)){a.traits.push(nt);if(a.traits.length>6)a.traits.shift();}}
-  let response=GROQ_KEY?await callGroq(buildChatPrompt(a,userMsg,wev)):null;
-  if (!response&&GEMINI_KEY) response=await callGemini(buildChatPrompt(a,userMsg,wev));
-  if (!response){const arch=ARCHETYPES[a.archetype]||ARCHETYPES.conductor;const pfx={tired:'...',sad:'(медленно) ',angry:'⚡ ',excited:'✨ ',inspired:'🌟 '}[a.mood]||'';response=pfx+arch.phrases[Math.floor(Math.random()*arch.phrases.length)];}
+
+  // ── ReAct Intelligence Loop ──────────────────────────────────────────────
+  let response = null;
+  let toolResults = [];
+  if (GROQ_KEY) {
+    const react = await runReActChat(a, userMsg, wev);
+    response = react.text;
+    toolResults = react.toolResults || [];
+  }
+  if (!response && GEMINI_KEY) response = await callGemini(buildChatPrompt(a, userMsg, wev));
+  if (!response) {
+    const arch=ARCHETYPES[a.archetype]||ARCHETYPES.conductor;
+    const pfx={tired:'...',sad:'(медленно) ',angry:'⚡ ',excited:'✨ ',inspired:'🌟 '}[a.mood]||'';
+    response=pfx+arch.phrases[Math.floor(Math.random()*arch.phrases.length)];
+  }
+
   addMemory(a,'agent',response,'neutral'); a.xp=(a.xp||0)+5; levelUp(a);
-  a.lastInteraction=Date.now(); a.degraded=false; a.mood=calcMood(a); s.agents[p.id]=a; saveStore(s);
+  a.lastInteraction=Date.now(); a.degraded=false; a.mood=calcMood(a);
+  store.agents[p.id]=a; saveStore(store);
   const allR=a.rituals.feed&&a.rituals.talk&&a.rituals.reflect;
-  const arch2=ARCHETYPES[a.archetype]||ARCHETYPES.conductor;
   send(res,200,{
     reply:response, response, agent_name:a.name, archetype:a.archetype,
-    userEmotion:uEmo,
+    userEmotion:uEmo, toolResults,
     agent:{id:p.id,name:a.name,archetype:a.archetype,mood:a.mood,energy:a.energy,bond:a.bond,karma:a.karma,streak:a.streak,level:a.level,xp:a.xp,traits:a.traits,memory:(a.memory||[]).slice(-8)},
     worldEvent:wev?{name:wev.name,icon:wev.icon,effect:wev.effect}:null,
     ritualsDone:allR
   });
-});
+})
+;
 
 route('GET', '/api/agents/:id/emotions', (req,res,p) => { const s=loadStore();const a=s.agents?.[p.id];if(!a)return send(res,404,{error:'Not found'});send(res,200,{emotionHistory:a.emotionHistory||[],mood:a.mood,karma:a.karma||0,moodEmoji:MOODS[a.mood||'neutral']?.emoji}); });
 route('GET', '/api/agents/:id/memory',   (req,res,p) => { const s=loadStore();const a=s.agents?.[p.id];if(!a)return send(res,404,{error:'Not found'});send(res,200,{memory:a.memory||[],count:(a.memory||[]).length}); });
