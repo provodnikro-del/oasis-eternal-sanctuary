@@ -721,7 +721,7 @@ route('GET', '/', (req, res) => {
 });
 
 route('GET', '/health', (req, res) => send(res, 200, {
-  status: 'ok', version: '0.9.2',
+  status: 'ok', version: '0.9.3',
   groq: !!GROQ_KEY, gemini: !!GEMINI_KEY, composio: !!COMPOSIO_KEY,
   tools: Object.keys(AGENT_TOOLS).filter(t => t !== 'none'),
 }));
@@ -813,7 +813,7 @@ async function webSearch(query) {
     try {
       const j = JSON.parse(raw);
       const lines = Object.entries(j).map(([coin, vals]) =>
-        `${coin.toUpperCase()}: $${vals.usd?.toLocaleString()} USD / ₽${vals.rub?.toLocaleString()} RUB`);
+        `${coin.toUpperCase()}: $${vals.usd ? Math.round(vals.usd).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 'N/A'} USD`);
       return '📊 Актуальные цены (CoinGecko):\n' + lines.join('\n');
     } catch(e) {}
   }
