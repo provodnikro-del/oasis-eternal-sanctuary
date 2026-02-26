@@ -721,7 +721,7 @@ route('GET', '/', (req, res) => {
 });
 
 route('GET', '/health', (req, res) => send(res, 200, {
-  status: 'ok', version: '0.9.3',
+  status: 'ok', version: '0.9.4',
   groq: !!GROQ_KEY, gemini: !!GEMINI_KEY, composio: !!COMPOSIO_KEY,
   tools: Object.keys(AGENT_TOOLS).filter(t => t !== 'none'),
 }));
@@ -812,8 +812,15 @@ async function webSearch(query) {
       headers:{'User-Agent':'GodLocal/0.9'} });
     try {
       const j = JSON.parse(raw);
-      const lines = Object.entries(j).map(([coin, vals]) =>
-        `${coin.toUpperCase()}: $${vals.usd ? Math.round(vals.usd).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 'N/A'} USD`);
+      const knownCoins = ['bitcoin','ethereum','solana','binancecoin','sui'];
+      const lines = Object.entries(j)
+        .filter(([coin, vals]) => knownCoins.includes(coin) && vals && typeof vals.usd === 'number')
+        .map(([coin, vals]) => {
+          const price = Math.round(vals.usd).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          const label = {bitcoin:'BTC',ethereum:'ETH',solana:'SOL',binancecoin:'BNB',sui:'SUI'}[coin] || coin.toUpperCase();
+          return `${label}: $${price} USD`;
+        });
+      if (!lines.length) return 'CoinGecko вернул пустой ответ (возможно, rate limit). Проверь цену на coingecko.com';
       return '📊 Актуальные цены (CoinGecko):\n' + lines.join('\n');
     } catch(e) {}
   }
