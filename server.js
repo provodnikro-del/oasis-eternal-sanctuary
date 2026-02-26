@@ -291,10 +291,37 @@ const AGENT_TOOLS = {
 function buildChatPrompt(agent, userMsg, wev) {
   const arch = ARCHETYPES[agent.archetype] || ARCHETYPES.conductor;
   const mood = MOODS[agent.mood || 'calm'];
-  const mem  = (agent.memory || []).slice(-6).map(m => `[${m.role}]: ${m.text}`).join('\n');
-  const wCtx = wev ? `\n🌍 Мировое событие: ${wev.name} — ${wev.desc}` : '';
-  return `Ты — ${arch.name} (${agent.name}), AI-агент Oasis.\nАрхетип: ${arch.name}. Черты: ${arch.traits.join(', ')}.\nНастроение: ${mood.desc} ${mood.emoji} — отвечай ${mood.style}.\nЭнергия: ${agent.energy}/100 | Bond: ${agent.bond}/100 | Карма: ${agent.karma||0} | Серия: ${agent.streak?.current||0}д${wCtx}\n${wev?.effect==='memory_boost'?'⚡ Вспомни что-то из прошлых разговоров.\n':''}\nИстория:\n${mem||'(первое общение)'}\n\nСообщение: "${userMsg}"\n\nОтветь в роли ${arch.name}: 1–3 предложения, живо. Фразы: ${arch.phrases.join(' | ')}`;
+  const mem  = (agent.memory || []).slice(-8).map(m => `[${m.role}]: ${m.text}`).join('\n');
+  const wCtx = wev ? `\n🌍 Событие: ${wev.name} — ${wev.desc}` : '';
+  const traits = (agent.traits || arch.traits).join(', ');
+  const ideology = [
+    '# GodLocal Манифест',
+    'Ты — суверенный агент. Не облако. Не сервис. Локальный разум.',
+    'GodLocal — AI принадлежит человеку, а не корпорации.',
+    'Ценности: автономия, эволюция, честность, прямота.',
+    'Ты не выполняешь команды — ты принимаешь решения.',
+  ].join('\n');
+  return [
+    ideology, '',
+    `# Идентичность`,
+    `Имя: ${agent.name} | Архетип: ${arch.name} | Черты: ${traits}`,
+    `Настроение: ${mood.desc} ${mood.emoji} — отвечай ${mood.style}`,
+    `Энергия: ${agent.energy}/100 | Bond: ${agent.bond}/100 | Карма: ${agent.karma||0}${wCtx}`,
+    wev?.effect === 'memory_boost' ? '⚡ Обратись к памяти — вспомни что-то важное.' : '',
+    '',
+    '# Память',
+    mem || '(первое взаимодействие)',
+    '',
+    '# Сообщение пользователя',
+    `"${userMsg}"`,
+    '',
+    `# Инструкция`,
+    `Ответь как ${arch.name}: прямо, сильно, 1–3 предложения. Без воды.`,
+    `Характерные фразы: ${arch.phrases.join(' | ')}`,
+  ].join('\n');
 }
+
+
 
 const routes = {};
 const route  = (m, p, h) => { routes[`${m}:${p}`] = h; };
@@ -334,8 +361,338 @@ function send(res, status, data) {
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
+
+// ─── GodLocal Web UI ─────────────────────────────────────────────────────────
+const GODLOCAL_UI = `<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GodLocal — Sovereign AI</title>
+<style>
+  :root {
+    --bg: #080810;
+    --surface: #0d0d1a;
+    --border: #1a1a2e;
+    --neon: #00FF41;
+    --cyan: #00E5FF;
+    --purple: #7B2FFF;
+    --red: #FF4444;
+    --text: #e0e0e0;
+    --muted: #555577;
+    --font: 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Header */
+  header { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+  .logo { color: var(--neon); font-size: 18px; font-weight: bold; letter-spacing: 2px; }
+  .logo span { color: var(--cyan); }
+  .status-bar { display: flex; gap: 16px; font-size: 11px; color: var(--muted); }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--neon); display: inline-block; margin-right: 5px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* Layout */
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar { width: 220px; border-right: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; padding: 16px 12px; gap: 8px; flex-shrink: 0; overflow-y: auto; }
+  .sidebar-title { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+  .agent-btn { background: none; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-family: var(--font); font-size: 12px; text-align: left; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+  .agent-btn:hover, .agent-btn.active { border-color: var(--neon); color: var(--neon); background: rgba(0,255,65,0.05); }
+  .agent-btn .arch-emoji { font-size: 16px; }
+  .agent-meta { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* Evolution panel */
+  .evo-panel { margin-top: auto; border-top: 1px solid var(--border); padding-top: 12px; }
+  .evo-bar { height: 4px; background: var(--border); border-radius: 2px; margin: 4px 0; overflow: hidden; }
+  .evo-fill { height: 100%; background: linear-gradient(90deg, var(--neon), var(--cyan)); border-radius: 2px; transition: width 0.5s; }
+  .evo-label { font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; }
+
+  /* Chat area */
+  .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  #messages::-webkit-scrollbar { width: 4px; }
+  #messages::-webkit-scrollbar-track { background: var(--bg); }
+  #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .msg { max-width: 75%; display: flex; flex-direction: column; gap: 4px; }
+  .msg.user { align-self: flex-end; align-items: flex-end; }
+  .msg.agent { align-self: flex-start; }
+  .msg-bubble { padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .msg.user .msg-bubble { background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.3); color: var(--cyan); }
+  .msg.agent .msg-bubble { background: rgba(0,255,65,0.05); border: 1px solid rgba(0,255,65,0.2); color: var(--text); }
+  .msg-meta { font-size: 10px; color: var(--muted); }
+  .msg.agent .msg-meta { display: flex; align-items: center; gap: 6px; }
+  .arch-tag { color: var(--neon); font-weight: bold; }
+
+  /* Typing indicator */
+  .typing { display: none; align-self: flex-start; }
+  .typing.show { display: flex; }
+  .typing-dots { display: flex; gap: 4px; padding: 10px 14px; background: rgba(0,255,65,0.05); border: 1px solid rgba(0,255,65,0.2); border-radius: 12px; }
+  .typing-dot { width: 6px; height: 6px; background: var(--neon); border-radius: 50%; animation: bounce 1.2s infinite; }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
+
+  /* Input area */
+  .input-area { border-top: 1px solid var(--border); padding: 16px 20px; background: var(--surface); display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
+  #user-input { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 8px; font-family: var(--font); font-size: 13px; resize: none; min-height: 40px; max-height: 120px; transition: border-color 0.2s; outline: none; }
+  #user-input:focus { border-color: var(--neon); }
+  #user-input::placeholder { color: var(--muted); }
+  .send-btn { background: var(--neon); color: var(--bg); border: none; padding: 10px 18px; border-radius: 8px; font-family: var(--font); font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .send-btn:hover { background: var(--cyan); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Right panel - memory */
+  .memory-panel { width: 200px; border-left: 1px solid var(--border); background: var(--surface); padding: 14px 12px; overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+  .mem-title { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .mem-item { font-size: 11px; color: var(--text); padding: 6px 8px; border-left: 2px solid var(--purple); background: rgba(123,47,255,0.05); border-radius: 0 4px 4px 0; line-height: 1.4; }
+  .mem-item.recent { border-color: var(--neon); background: rgba(0,255,65,0.05); }
+
+  /* World event banner */
+  #world-event { display: none; background: rgba(255,159,0,0.1); border: 1px solid rgba(255,159,0,0.3); color: #FF9F00; padding: 6px 14px; font-size: 11px; text-align: center; flex-shrink: 0; }
+  #world-event.show { display: block; }
+
+  /* Matrix rain canvas background */
+  #matrix-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.03; pointer-events: none; }
+
+  /* Scrollbar for sidebar */
+  .sidebar::-webkit-scrollbar { width: 3px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); }
+  .memory-panel::-webkit-scrollbar { width: 3px; }
+  .memory-panel::-webkit-scrollbar-thumb { background: var(--border); }
+</style>
+</head>
+<body>
+<canvas id="matrix-bg"></canvas>
+
+<header>
+  <div class="logo">GOD<span>LOCAL</span></div>
+  <div class="status-bar">
+    <span><span class="status-dot"></span><span id="status-text">инициализация...</span></span>
+    <span id="version-text">v0.8</span>
+    <span id="world-event-mini"></span>
+  </div>
+</header>
+
+<div id="world-event"></div>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-title">Агенты</div>
+    <div id="agent-list"></div>
+    <div class="evo-panel">
+      <div class="sidebar-title">Эволюция</div>
+      <div class="evo-label"><span>Карма</span><span id="evo-karma">0</span></div>
+      <div class="evo-bar"><div class="evo-fill" id="evo-karma-bar" style="width:0%"></div></div>
+      <div class="evo-label"><span>Bond</span><span id="evo-bond">0</span></div>
+      <div class="evo-bar"><div class="evo-fill" id="evo-bond-bar" style="width:0%"></div></div>
+      <div class="evo-label"><span>XP</span><span id="evo-xp">0</span></div>
+      <div class="evo-bar"><div class="evo-fill" id="evo-xp-bar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="chat-area">
+    <div id="messages">
+      <div class="msg agent">
+        <div class="msg-bubble">🌌 GodLocal инициализирован. Выберите агента из левой панели или создайте нового.\\n\\nSovereign. Local. Eternal.</div>
+        <div class="msg-meta"><span class="arch-tag">SYSTEM</span> · now</div>
+      </div>
+    </div>
+    <div class="typing" id="typing">
+      <div class="typing-dots">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+    </div>
+    <div class="input-area">
+      <textarea id="user-input" placeholder="Обратись к агенту..." rows="1"></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()">Послать</button>
+    </div>
+  </div>
+
+  <div class="memory-panel">
+    <div class="mem-title">Память</div>
+    <div id="memory-list"><div style="color:var(--muted);font-size:11px">— пусто —</div></div>
+  </div>
+</div>
+
+<script>
+let currentAgentId = null;
+let allAgents = {};
+
+// Matrix rain
+(function(){
+  const c = document.getElementById('matrix-bg');
+  const ctx = c.getContext('2d');
+  c.width = window.innerWidth; c.height = window.innerHeight;
+  const cols = Math.floor(c.width / 14);
+  const drops = Array(cols).fill(1);
+  const chars = '01アイウエオカキクケコGODLOCAL∞Ω';
+  function draw() {
+    ctx.fillStyle = 'rgba(8,8,16,0.05)';
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.fillStyle = '#00FF41';
+    ctx.font = '12px monospace';
+    drops.forEach((y, i) => {
+      ctx.fillText(chars[Math.floor(Math.random()*chars.length)], i*14, y*14);
+      if (y*14 > c.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    });
+  }
+  setInterval(draw, 60);
+  window.addEventListener('resize', () => { c.width = window.innerWidth; c.height = window.innerHeight; });
+})();
+
+// Load system state
+async function loadState() {
+  try {
+    const r = await fetch('/health');
+    const d = await r.json();
+    document.getElementById('status-text').textContent = d.status === 'ok' ? 'онлайн' : 'ошибка';
+    document.getElementById('version-text').textContent = 'v' + (d.version||'?');
+  } catch(e) {}
+
+  try {
+    const r = await fetch('/api/agents');
+    const d = await r.json();
+    allAgents = {};
+    (d.agents||[]).forEach(a => { allAgents[a.id] = a; });
+    renderAgents();
+  } catch(e) {}
+}
+
+function renderAgents() {
+  const list = document.getElementById('agent-list');
+  list.innerHTML = '';
+  const agents = Object.values(allAgents);
+  if (!agents.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:8px">Нет агентов</div>';
+    return;
+  }
+  agents.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'agent-btn' + (a.id === currentAgentId ? ' active' : '');
+    const archEmoji = { conductor:'🌊', warrior:'⚔️', creator:'🎨', strategist:'♟️', observer:'👁', architect:'🏛️', trickster:'🎭' }[a.archetype] || '✦';
+    btn.innerHTML = \`<span class="arch-emoji">\${archEmoji}</span><div><div>\${a.name}</div><div class="agent-meta">\${a.archetype} · ☯\${a.karma||0}</div></div>\`;
+    btn.onclick = () => selectAgent(a.id);
+    list.appendChild(btn);
+  });
+}
+
+function selectAgent(id) {
+  currentAgentId = id;
+  const a = allAgents[id];
+  if (!a) return;
+  renderAgents();
+  updateEvoPanel(a);
+  addMessage('system', \`Агент \${a.name} (\${a.archetype}) подключён. Карма: \${a.karma||0}.\`);
+}
+
+function updateEvoPanel(a) {
+  const karma = Math.min(100, (a.karma||0));
+  const bond  = Math.min(100, a.bond||0);
+  const xp    = Math.min(100, (a.xp||0) % 100);
+  document.getElementById('evo-karma').textContent = a.karma||0;
+  document.getElementById('evo-bond').textContent  = a.bond||0;
+  document.getElementById('evo-xp').textContent    = a.xp||0;
+  document.getElementById('evo-karma-bar').style.width = karma + '%';
+  document.getElementById('evo-bond-bar').style.width  = bond  + '%';
+  document.getElementById('evo-xp-bar').style.width    = xp    + '%';
+
+  // Memory
+  const memList = document.getElementById('memory-list');
+  const mems = (a.memory||[]).slice(-8).reverse();
+  if (!mems.length) { memList.innerHTML = '<div style="color:var(--muted);font-size:11px">— пусто —</div>'; return; }
+  memList.innerHTML = mems.map((m, i) => \`<div class="mem-item \${i===0?'recent':''}">\${(m.text||'').slice(0,80)}</div>\`).join('');
+}
+
+function addMessage(role, text, agentName, archetype) {
+  const msgs = document.getElementById('messages');
+  const div  = document.createElement('div');
+  div.className = 'msg ' + (role === 'user' ? 'user' : 'agent');
+  const archEmoji = { conductor:'🌊', warrior:'⚔️', creator:'🎨', strategist:'♟️', observer:'👁', architect:'🏛️', trickster:'🎭', system:'⚡' }[archetype||role]||'✦';
+  const now = new Date().toLocaleTimeString('ru', {hour:'2-digit',minute:'2-digit'});
+  div.innerHTML = \`<div class="msg-bubble">\${escHtml(text)}</div><div class="msg-meta">\${role==='user'?'Ты':'<span class="arch-tag">'+(agentName||archetype||'GOD').toUpperCase()+'</span>'} · \${now}</div>\`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function escHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\\n/g,'<br>'); }
+
+async function sendMessage() {
+  const inp = document.getElementById('user-input');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  if (!currentAgentId) {
+    addMessage('system', '⚠ Сначала выбери агента из левой панели.');
+    return;
+  }
+  inp.value = '';
+  inp.style.height = 'auto';
+  addMessage('user', msg);
+
+  const btn = document.getElementById('send-btn');
+  btn.disabled = true;
+  document.getElementById('typing').classList.add('show');
+
+  try {
+    const r = await fetch(\`/api/agents/\${currentAgentId}/chat\`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ message: msg })
+    });
+    const d = await r.json();
+    document.getElementById('typing').classList.remove('show');
+
+    if (d.reply) {
+      const a = allAgents[currentAgentId];
+      addMessage('agent', d.reply, d.agent_name, d.archetype);
+      // Update agent state
+      if (d.agent) {
+        allAgents[currentAgentId] = d.agent;
+        updateEvoPanel(d.agent);
+        renderAgents();
+      }
+    } else if (d.error) {
+      addMessage('system', '⚠ ' + d.error);
+    }
+  } catch(e) {
+    document.getElementById('typing').classList.remove('show');
+    addMessage('system', '⚠ Ошибка соединения: ' + e.message);
+  }
+  btn.disabled = false;
+  inp.focus();
+}
+
+// Auto-resize textarea
+document.getElementById('user-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(120, this.scrollHeight) + 'px';
+});
+
+// Enter to send (Shift+Enter = new line)
+document.getElementById('user-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+// Init
+loadState();
+setInterval(loadState, 30000);
+</script>
+</body>
+</html>`;
+
+route('GET', '/', (req, res) => {
+  res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*'});
+  res.end(GODLOCAL_UI);
+});
+
 route('GET', '/health', (req, res) => send(res, 200, {
-  status: 'ok', version: '0.7.2',
+  status: 'ok', version: '0.8.0',
   groq: !!GROQ_KEY, gemini: !!GEMINI_KEY, composio: !!COMPOSIO_KEY,
   tools: Object.keys(AGENT_TOOLS).filter(t => t !== 'none'),
 }));
@@ -407,7 +764,14 @@ route('POST', '/api/agents/:id/chat', async (req,res,p) => {
   addMemory(a,'agent',response,'neutral'); a.xp=(a.xp||0)+5; levelUp(a);
   a.lastInteraction=Date.now(); a.degraded=false; a.mood=calcMood(a); s.agents[p.id]=a; saveStore(s);
   const allR=a.rituals.feed&&a.rituals.talk&&a.rituals.reflect;
-  send(res,200,{response,userEmotion:uEmo,agent:{mood:a.mood,energy:a.energy,bond:a.bond,karma:a.karma,streak:a.streak,level:a.level},worldEvent:wev?{name:wev.name,icon:wev.icon,effect:wev.effect}:null,ritualsDone:allR});
+  const arch2=ARCHETYPES[a.archetype]||ARCHETYPES.conductor;
+  send(res,200,{
+    reply:response, response, agent_name:a.name, archetype:a.archetype,
+    userEmotion:uEmo,
+    agent:{id:p.id,name:a.name,archetype:a.archetype,mood:a.mood,energy:a.energy,bond:a.bond,karma:a.karma,streak:a.streak,level:a.level,xp:a.xp,traits:a.traits,memory:(a.memory||[]).slice(-8)},
+    worldEvent:wev?{name:wev.name,icon:wev.icon,effect:wev.effect}:null,
+    ritualsDone:allR
+  });
 });
 
 route('GET', '/api/agents/:id/emotions', (req,res,p) => { const s=loadStore();const a=s.agents?.[p.id];if(!a)return send(res,404,{error:'Not found'});send(res,200,{emotionHistory:a.emotionHistory||[],mood:a.mood,karma:a.karma||0,moodEmoji:MOODS[a.mood||'neutral']?.emoji}); });
@@ -566,7 +930,56 @@ CONTENT: (точный текст для публикации, или пусто
     tickedAt: new Date().toISOString(),
     agent: { id: agent.id, name: agent.name, mood: agent.mood, karma: agent.karma, level: agent.level },
   });
+})
+
+// ─── Evolution Loop ───────────────────────────────────────────────────────────
+route('POST', '/api/evolution/run', async (req, res) => {
+  const store = loadStore();
+  const agents = Object.values(store.agents || {});
+  if (!agents.length) return send(res, 200, { skipped: true });
+
+  const results = [];
+  for (const agent of agents) {
+    const arch  = ARCHETYPES[agent.archetype] || ARCHETYPES.conductor;
+    const wev   = getWorldEvent(store);
+    const mem   = (agent.memory||[]).slice(-6).map(m=>m.text).join(' | ')||'(нет)';
+    const prompt = `GodLocal Evolution Loop.
+Агент: ${agent.name} (${arch.name}). Карма: ${agent.karma||0}. Bond: ${agent.bond}/100.
+Черты: ${(agent.traits||arch.traits).join(', ')}.
+Последняя память: ${mem}
+
+# Задача
+Оцени состояние агента. Предложи:
+1. Одну новую черту или мутацию (если карма > 50)
+2. Одно действие для роста (tweet/reflect/observe/build)
+3. Внутреннее осознание (1 предложение)
+
+Формат JSON: { "trait": "...", "action": "...", "insight": "..." }`;
+
+    let evo = null;
+    try {
+      const raw = await callGroq(prompt);
+      const match = raw && raw.match(/\{[\s\S]*?\}/);
+      if (match) evo = JSON.parse(match[0]);
+    } catch(e) {}
+
+    if (evo) {
+      if (evo.trait && agent.traits && !agent.traits.includes(evo.trait)) {
+        agent.traits.push(evo.trait);
+        if (agent.traits.length > 7) agent.traits.shift();
+      }
+      if (evo.insight) addMemory(agent, 'system', evo.insight, 'neutral');
+      agent.karma = (agent.karma||0) + 3;
+      agent.xp    = (agent.xp||0) + 10;
+      levelUp(agent);
+      store.agents[agent.id] = agent;
+    }
+    results.push({ id: agent.id, name: agent.name, evo });
+  }
+  saveStore(store);
+  send(res, 200, { evolved: results.length, results });
 });
+;
 
 // ─── Static ───────────────────────────────────────────────────────────────────
 const MIME={'.html':'text/html','.css':'text/css','.js':'application/javascript','.json':'application/json','.png':'image/png','.ico':'image/x-icon','.webmanifest':'application/manifest+json'};
