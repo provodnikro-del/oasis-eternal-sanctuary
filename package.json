@@ -4,11 +4,10 @@
   "private": true,
   "description": "GodLocal × AI tamagotchi-civilization engine",
   "scripts": {
-    "build": "npx tsc",
-    "start": "node dist/packages/server/index.js",
+    "start": "node server.js",
     "dev": "ts-node --skipProject --compiler-options '{\"module\":\"commonjs\",\"strict\":false}' packages/server/index.ts",
-    "test": "jest --passWithNoTests",
-    "typecheck": "tsc --noEmit"
+    "build": "echo 'No build needed - plain JS entrypoint'",
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "fastify": "^4.28.0",
@@ -24,13 +23,6 @@
   },
   "jest": {
     "preset": "ts-jest",
-    "testEnvironment": "node",
-    "testMatch": ["**/tests/**/*.test.ts"],
-    "moduleNameMapper": {
-      "^../shared-types$": "<rootDir>/packages/shared-types/index.ts",
-      "^../shared-types/index$": "<rootDir>/packages/shared-types/index.ts",
-      "^../runtime/config$": "<rootDir>/packages/runtime/config.ts",
-      "^../runtime/logger$": "<rootDir>/packages/runtime/logger.ts"
-    }
+    "testEnvironment": "node"
   }
 }

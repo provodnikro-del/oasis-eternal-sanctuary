@@ -3,8 +3,8 @@ services:
     name: oasis-eternal-sanctuary
     runtime: node
     plan: free
-    buildCommand: npm install --include=dev && npx tsc
-    startCommand: node dist/packages/server/index.js
+    buildCommand: npm install --only=prod
+    startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
