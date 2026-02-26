@@ -1,0 +1,47 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": [
+      "ES2020"
+    ],
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "noImplicitAny": false,
+    "paths": {
+      "../shared-types": [
+        "./packages/shared-types/index.ts"
+      ],
+      "../shared-types/index": [
+        "./packages/shared-types/index.ts"
+      ],
+      "../runtime/config": [
+        "./packages/runtime/config.ts"
+      ],
+      "../runtime/logger": [
+        "./packages/runtime/logger.ts"
+      ],
+      "../runtime/event-bus": [
+        "./packages/runtime/event-bus.ts"
+      ]
+    }
+  },
+  "include": [
+    "packages/**/*.ts",
+    "scripts/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
