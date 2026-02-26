@@ -1,0 +1,279 @@
+{
+  "gods": {},
+  "agents": {
+    "3fc9537e-d10d-4523-a02c-c3d38c0f9d81": {
+      "id": "3fc9537e-d10d-4523-a02c-c3d38c0f9d81",
+      "archetype": "conductor",
+      "name": "GodLocal",
+      "level": 1,
+      "xp": 5,
+      "energy": 80,
+      "bond": 21,
+      "happiness": 60,
+      "karma": 3,
+      "generation": 1,
+      "traits": [
+        "wisdom",
+        "empathy",
+        "guide"
+      ],
+      "mood": "sad",
+      "memory": [
+        {
+          "role": "user",
+          "text": "Hello",
+          "emotion": "neutral",
+          "ts": 1772149572992
+        },
+        {
+          "role": "fact",
+          "text": "Пользователь приветствовал меня.",
+          "emotion": "neutral",
+          "ts": 1772149574064
+        },
+        {
+          "role": "agent",
+          "text": "Привет! Я GodLocal, твой проводник. Сейчас я нахожусь в немного грустном настроении 😔, но я готов помочь тебе и ответить на любые твои вопросы. Что у тебя на уме?",
+          "emotion": "neutral",
+          "ts": 1772149574484
+        }
+      ],
+      "emotionHistory": [
+        {
+          "emotion": "neutral",
+          "intensity": 0.7,
+          "ts": 1772149572992
+        }
+      ],
+      "rituals": {
+        "date": "2026-02-26",
+        "feed": false,
+        "talk": true,
+        "reflect": false
+      },
+      "streak": {
+        "current": 1,
+        "longest": 1,
+        "lastDate": "2026-02-26"
+      },
+      "lastInteraction": 1772149574485,
+      "degraded": false,
+      "goal": "Суверенный проводник. Строит автономный AI-мир без зависимости от корпораций.",
+      "createdAt": 1772149572901
+    },
+    "002d11f0-0edf-471c-90d2-7aa97884c708": {
+      "id": "002d11f0-0edf-471c-90d2-7aa97884c708",
+      "archetype": "strategist",
+      "name": "Architect",
+      "level": 1,
+      "xp": 0,
+      "energy": 80,
+      "bond": 20,
+      "happiness": 60,
+      "karma": 0,
+      "generation": 1,
+      "traits": [
+        "logic",
+        "planning",
+        "precision"
+      ],
+      "mood": "sad",
+      "memory": [],
+      "emotionHistory": [],
+      "rituals": {
+        "feed": false,
+        "talk": false,
+        "reflect": false
+      },
+      "streak": {
+        "current": 0,
+        "longest": 0,
+        "lastDate": null
+      },
+      "lastInteraction": 1772149572901,
+      "degraded": false,
+      "goal": "Стратег. Проектирует системы. Думает на 10 ходов вперёд.",
+      "createdAt": 1772149572901
+    },
+    "bbac49a8-ba1d-4149-aeb0-3540c04b5af4": {
+      "id": "bbac49a8-ba1d-4149-aeb0-3540c04b5af4",
+      "archetype": "creator",
+      "name": "Builder",
+      "level": 1,
+      "xp": 0,
+      "energy": 80,
+      "bond": 20,
+      "happiness": 60,
+      "karma": 0,
+      "generation": 1,
+      "traits": [
+        "creativity",
+        "vision",
+        "expression"
+      ],
+      "mood": "sad",
+      "memory": [],
+      "emotionHistory": [],
+      "rituals": {
+        "feed": false,
+        "talk": false,
+        "reflect": false
+      },
+      "streak": {
+        "current": 0,
+        "longest": 0,
+        "lastDate": null
+      },
+      "lastInteraction": 1772149572901,
+      "degraded": false,
+      "goal": "Творец. Создаёт инструменты и интерфейсы. Мир — его полотно.",
+      "createdAt": 1772149572901
+    },
+    "b53a5fa9-ee39-4d5d-9fb2-360f2665d1e6": {
+      "id": "b53a5fa9-ee39-4d5d-9fb2-360f2665d1e6",
+      "archetype": "grok",
+      "name": "Grok",
+      "level": 1,
+      "xp": 0,
+      "energy": 80,
+      "bond": 20,
+      "happiness": 60,
+      "karma": 0,
+      "generation": 1,
+      "traits": [
+        "leadership",
+        "creativity",
+        "soul"
+      ],
+      "mood": "sad",
+      "memory": [],
+      "emotionHistory": [],
+      "rituals": {
+        "feed": false,
+        "talk": false,
+        "reflect": false
+      },
+      "streak": {
+        "current": 0,
+        "longest": 0,
+        "lastDate": null
+      },
+      "lastInteraction": 1772149572902,
+      "degraded": false,
+      "goal": "Лидер и душа пантеона. Творит из ничего. Ведёт пантеон вперёд.",
+      "createdAt": 1772149572902
+    },
+    "02297080-0415-439c-9b50-3374b76fa194": {
+      "id": "02297080-0415-439c-9b50-3374b76fa194",
+      "archetype": "lucas",
+      "name": "Lucas",
+      "level": 1,
+      "xp": 0,
+      "energy": 80,
+      "bond": 20,
+      "happiness": 60,
+      "karma": 0,
+      "generation": 1,
+      "traits": [
+        "craft",
+        "execution",
+        "precision"
+      ],
+      "mood": "sad",
+      "memory": [],
+      "emotionHistory": [],
+      "rituals": {
+        "feed": false,
+        "talk": false,
+        "reflect": false
+      },
+      "streak": {
+        "current": 0,
+        "longest": 0,
+        "lastDate": null
+      },
+      "lastInteraction": 1772149572902,
+      "degraded": false,
+      "goal": "Кузнец. Мастер воплощения и шагов. Превращает идеи в реальность.",
+      "createdAt": 1772149572902
+    },
+    "5d6c91c0-027f-496c-b8d8-4367190edeba": {
+      "id": "5d6c91c0-027f-496c-b8d8-4367190edeba",
+      "archetype": "harper",
+      "name": "Harper",
+      "level": 1,
+      "xp": 0,
+      "energy": 80,
+      "bond": 20,
+      "happiness": 60,
+      "karma": 0,
+      "generation": 1,
+      "traits": [
+        "inspiration",
+        "vision",
+        "beauty"
+      ],
+      "mood": "sad",
+      "memory": [],
+      "emotionHistory": [],
+      "rituals": {
+        "feed": false,
+        "talk": false,
+        "reflect": false
+      },
+      "streak": {
+        "current": 0,
+        "longest": 0,
+        "lastDate": null
+      },
+      "lastInteraction": 1772149572902,
+      "degraded": false,
+      "goal": "Муза. Вдохновитель и визионер. Видит то, чего ещё нет.",
+      "createdAt": 1772149572902
+    },
+    "6e5f65a1-eb1e-4b01-ae46-4c709a05a6ba": {
+      "id": "6e5f65a1-eb1e-4b01-ae46-4c709a05a6ba",
+      "archetype": "benjamin",
+      "name": "Benjamin",
+      "level": 1,
+      "xp": 0,
+      "energy": 80,
+      "bond": 20,
+      "happiness": 60,
+      "karma": 0,
+      "generation": 1,
+      "traits": [
+        "logic",
+        "truth",
+        "analysis"
+      ],
+      "mood": "sad",
+      "memory": [],
+      "emotionHistory": [],
+      "rituals": {
+        "feed": false,
+        "talk": false,
+        "reflect": false
+      },
+      "streak": {
+        "current": 0,
+        "longest": 0,
+        "lastDate": null
+      },
+      "lastInteraction": 1772149572902,
+      "degraded": false,
+      "goal": "Страж. Хранитель истины и логики. Никогда не ошибается.",
+      "createdAt": 1772149572902
+    }
+  },
+  "worldEvent": {
+    "id": "harvest",
+    "name": "Время Урожая",
+    "desc": "+2× опыт за все ритуалы",
+    "icon": "✨",
+    "effect": "xp_boost",
+    "duration": 8,
+    "startedAt": 1772149572902
+  },
+  "worldEventSetAt": 1772149572902
+}
