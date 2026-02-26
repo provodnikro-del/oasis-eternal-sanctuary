@@ -237,13 +237,15 @@ async function composioAction(actionSlug, connectedAccountId, input) {
   if (!COMPOSIO_KEY) return { ok: false, error: 'COMPOSIO_API_KEY not set' };
   try {
     const composio = getComposio();
-    // Use entity.execute — it resolves appKey and connectedAccount automatically
-    const entity = composio.getEntity('default');
-    const result  = await entity.execute({
-      actionName:        actionSlug,
-      params:            input,
-      connectedAccountId,
-    });
+    const entity   = composio.getEntity('default');
+    // Skip placeholder ca_ IDs (SureThing defaults) — let SDK resolve by entity
+    const isPlaceholder = !connectedAccountId
+      || connectedAccountId === 'ca_iR0euwwdBDaO'
+      || connectedAccountId === 'ca_vTb06KLzoS7T'
+      || connectedAccountId === 'ca_C9kqBGUUktGi';
+    const execParams = { actionName: actionSlug, params: input };
+    if (!isPlaceholder) execParams.connectedAccountId = connectedAccountId;
+    const result = await entity.execute(execParams);
     return { ok: true, data: result };
   } catch (e) {
     return { ok: false, error: e?.message || String(e) };
@@ -604,6 +606,19 @@ if (WebSocketServer) {
 } else {
   console.log('ℹ️ ws package not installed — WebSocket disabled');
 }
+
+
+route('GET', '/api/debug/composio', async (req, res) => {
+  if (!COMPOSIO_KEY) return send(res, 503, { error: 'COMPOSIO_API_KEY not set' });
+  try {
+    const composio = getComposio();
+    const conns = await composio.connectedAccounts.list({ status: 'ACTIVE', limit: 20 });
+    const items = (conns?.items || []).map(c => ({ id: c.id, app: c.appName, status: c.status, entityId: c.entityId }));
+    send(res, 200, { apiKeySet: true, connections: items, count: items.length });
+  } catch(e) {
+    send(res, 200, { apiKeySet: true, connections: [], error: e?.message });
+  }
+});
 
 server.listen(PORT, () => {
   console.log(`🌿 Oasis v0.6.0 on :${PORT}`);
