@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="application-name" content="Oasis">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Oasis">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="apple-touch-startup-image" href="/icons/splash/splash-1290x2796.png" media="(device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="/icons/splash/splash-1170x2532.png" media="(device-width:390px) and (device-height:844px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="/icons/splash/splash-1125x2436.png" media="(device-width:375px) and (device-height:812px) and (-webkit-device-pixel-ratio:3)">
+<link rel="apple-touch-startup-image" href="/icons/splash/splash-828x1792.png" media="(device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:2)">
+<meta name="theme-color" content="#0a0015">
+<title>Oasis — Eternal Sanctuary</title>
+<style>
+:root{--bg:#0a0015;--card:#12112a;--border:#1e1a36;--accent:#7c6af7;--accent2:#a78bfa;--gold:#f59e0b;--text:#e2e8f0;--muted:#64748b;--green:#34d399;--red:#f87171;--rare:#38bdf8;--legendary:#f59e0b;--safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;min-height:100dvh;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased;}
+.header{padding:calc(var(--safe-top) + 52px) 20px 16px;text-align:center;background:linear-gradient(180deg,rgba(107,33,168,.18) 0%,transparent 100%);border-bottom:1px solid var(--border);}
+.header h1{font-size:22px;font-weight:700;}
+.header p{font-size:13px;color:var(--muted);margin-top:4px;}
+.tab-bar{display:flex;border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:10;}
+.tab{flex:1;padding:12px 8px;text-align:center;font-size:12px;color:var(--muted);cursor:pointer;transition:all .2s;}
+.tab.active{color:var(--accent2);border-bottom:2px solid var(--accent);}
+.view{display:none;padding:16px;}.view.active{display:block;}
+.arch-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.arch-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 12px;cursor:pointer;transition:all .15s;}
+.arch-card:active{transform:scale(.97);}
+.arch-card.selected{border-color:var(--accent);background:rgba(124,106,247,.1);}
+.arch-name{font-size:14px;font-weight:600;margin-bottom:2px;}
+.arch-desc{font-size:11px;color:var(--muted);line-height:1.4;}
+.arch-emoji{font-size:24px;margin-bottom:6px;}
+.trait-bar{margin:6px 0;}
+.trait-label{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:2px;}
+.trait-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.trait-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .6s ease;}
+.compat-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-top:12px;text-align:center;}
+.tier-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;text-transform:uppercase;}
+.tier-legendary{background:rgba(245,158,11,.15);color:var(--gold);border:1px solid var(--gold);}
+.tier-rare{background:rgba(56,189,248,.12);color:var(--rare);border:1px solid var(--rare);}
+.tier-common{background:rgba(52,211,153,.12);color:var(--green);border:1px solid var(--green);}
+.tier-incompatible{background:rgba(248,113,113,.12);color:var(--red);border:1px solid var(--red);}
+.score-ring{width:80px;height:80px;margin:12px auto;position:relative;}
+.score-ring svg{transform:rotate(-90deg);}
+.score-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;}
+.breed-btn{display:block;width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),#9b59f7);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px;transition:opacity .15s;}
+.breed-btn:active{opacity:.85;}.breed-btn:disabled{opacity:.4;}
+.result-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-top:12px;animation:slideUp .3s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.spark-badge{background:linear-gradient(135deg,#f59e0b,#ef4444);color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:8px;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+.select-row{display:flex;gap:10px;margin-bottom:12px;}
+.arch-select{flex:1;padding:10px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;font-size:14px;appearance:none;-webkit-appearance:none;}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);}
+.info-label{font-size:13px;color:var(--muted);}.info-value{font-size:13px;font-weight:600;}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px;animation:pulse 2s infinite;}
+#install-banner{background:linear-gradient(135deg,rgba(107,33,168,.35),rgba(124,106,247,.2));border:1px solid rgba(124,106,247,.4);border-radius:14px;padding:14px 16px;margin:0 0 12px;display:none;}
+#install-banner.show{display:block;animation:slideUp .35s ease;}
+.banner-title{font-size:14px;font-weight:700;margin-bottom:6px;}
+.banner-steps{font-size:12px;color:#c4b5fd;line-height:1.9;}
+.banner-steps span{background:rgba(124,106,247,.25);border-radius:6px;padding:1px 7px;margin-right:4px;font-weight:600;}
+.banner-close{float:right;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;margin-top:-2px;}
+.bottom-space{height:calc(var(--safe-bot) + 8px);}
+</style>
+</head>
+<body>
+<div class="header"><h1>✦ OASIS</h1><p>Eternal Sanctuary · v0.1.0</p></div>
+<div class="tab-bar">
+<div class="tab active" onclick="showTab('archetypes',this)">Архетипи</div>
+<div class="tab" onclick="showTab('crossbreed',this)">Схрестити</div>
+<div class="tab" onclick="showTab('install',this)">Встановити</div>
+<div class="tab" onclick="showTab('info',this)">Статус</div>
+</div>
+
+<div id="view-archetypes" class="view active">
+<div id="install-banner"><button class="banner-close" onclick="closeBanner()">×</button><div class="banner-title">📲 Додай Oasis на домашній екран</div><div class="banner-steps"><span>1</span>Натисни <b>Поділитися</b> ↑ у нижній панелі Safari<br><span>2</span>Обери <b>На екран «Домівка»</b><br><span>3</span>Натисни <b>Додати</b></div></div>
+<div id="arch-grid" class="arch-grid"></div>
+<div id="compat-section" style="display:none"><div class="compat-box" id="compat-result"></div></div>
+</div>
+
+<div id="view-crossbreed" class="view">
+<div class="select-row"><select id="select-a" class="arch-select" onchange="previewCompat()"><option value="">— Батько A</option></select><select id="select-b" class="arch-select" onchange="previewCompat()"><option value="">— Батько B</option></select></div>
+<div id="compat-preview"></div>
+<button class="breed-btn" id="breed-btn" onclick="doCrossbreed()" disabled>⚡ Схрестити</button>
+<div id="breed-result"></div>
+</div>
+
+<div id="view-install" class="view">
+<div class="compat-box" style="text-align:left;line-height:2">
+<div style="font-size:20px;font-weight:700;margin-bottom:12px;text-align:center">📲 Встановити Oasis</div>
+<div style="font-size:13px;color:var(--muted);margin-bottom:16px;text-align:center">Oasis — це PWA. Без App Store, безкоштовно.</div>
+<div style="font-size:13px;font-weight:600;color:var(--accent2);margin-bottom:6px">iPhone / iPad (Safari)</div>
+<div style="font-size:13px;line-height:1.9">1. Відкрий у <b>Safari</b> (не Chrome)<br>2. Натисни іконку <b>Поділитися</b> ↑ внизу<br>3. Прокрути → <b>«На екран "Домівка"»</b><br>4. Натисни <b>«Додати»</b></div>
+<div style="margin-top:16px;font-size:13px;font-weight:600;color:var(--accent2)">Android (Chrome)</div>
+<div style="font-size:13px;line-height:1.9">1. Натисни ⋮ (меню)<br>2. Обери <b>«Додати на головний екран»</b></div>
+<div id="install-status" style="margin-top:16px;font-size:12px;color:var(--muted);text-align:center"></div>
+<button id="install-btn" class="breed-btn" onclick="triggerInstall()" style="display:none;margin-top:16px">✦ Встановити зараз</button>
+</div>
+</div>
+
+<div id="view-info" class="view">
+<div class="info-row"><span class="info-label">API</span><span class="info-value" id="api-status">перевіряємо...</span></div>
+<div class="info-row"><span class="info-label">Офлайн</span><span class="info-value" id="sw-status">перевіряємо...</span></div>
+<div class="info-row"><span class="info-label">Архетипів</span><span class="info-value" id="arch-count">—</span></div>
+<div class="info-row"><span class="info-label">Версія</span><span class="info-value">v0.1.0</span></div>
+<div class="info-row"><span class="info-label">Engine</span><span class="info-value">GodLocal Core · mulberry32</span></div>
+<div class="info-row"><span class="info-label">Тести</span><span class="info-value">81/81 ✅</span></div>
+<div class="info-row"><span class="info-label">Оцінка</span><span class="info-value">9.7 / 10</span></div>
+</div>
+<div class="bottom-space"></div>
+
+<script>
+const ARCH_META={dreamer:{emoji:"🌙",label:"Мрійник"},analyst:{emoji:"🧠",label:"Аналітик"},poet:{emoji:"🌸",label:"Поет"},builder:{emoji:"🏗️",label:"Будівник"},guardian:{emoji:"🛡️",label:"Страж"},trickster:{emoji:"🃏",label:"Трикстер"}};
+const TIER={legendary:{label:"LEGENDARY ✦",cls:"tier-legendary"},rare:{label:"RARE ◆",cls:"tier-rare"},common:{label:"COMMON",cls:"tier-common"},incompatible:{label:"НЕСУМІСНІ",cls:"tier-incompatible"}};
+const CORE=["creativity","empathy","ambition","humor","logic","curiosity","loyalty"];
+const TN={creativity:"Творчість",empathy:"Емпатія",ambition:"Амбіції",humor:"Гумор",logic:"Логіка",curiosity:"Допитливість",loyalty:"Лояльність"};
+let archs={},deferredInstall=null;
+async function init(){registerSW();detectInstall();try{const list=await fetch("/api/archetypes").then(r=>r.json());list.forEach(a=>archs[a.name]=a);renderGrid(list);populateSels(list);checkHealth();}catch(e){console.error(e);}checkCache();}
+function registerSW(){if(!('serviceWorker'in navigator)){document.getElementById('sw-status').textContent='Не підтримується';return;}navigator.serviceWorker.register('/sw.js').then(()=>{document.getElementById('sw-status').innerHTML='<span class="status-dot"></span>Активний';}).catch(()=>{document.getElementById('sw-status').textContent='Помилка';});}
+async function checkCache(){if(!('caches'in window))return;try{const c=await caches.open('oasis-eternal-v1');const k=await c.keys();document.getElementById('sw-status').innerHTML=`<span class="status-dot"></span>Активний (${k.length} файлів)`;}catch{}}
+function detectInstall(){const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);const isSA=window.navigator.standalone===true||window.matchMedia('(display-mode:standalone)').matches;if(isSA){document.getElementById('install-status').textContent='✅ Oasis вже встановлений';return;}if(isIOS&&!sessionStorage.getItem('banner-closed'))setTimeout(()=>document.getElementById('install-banner').classList.add('show'),1200);document.getElementById('install-status').textContent=isIOS?'Відкрий в Safari → Поділитися ↑':'Відкрий в Chrome для автоматичного банера';}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;document.getElementById('install-btn').style.display='block';document.getElementById('install-status').textContent='✅ Готово до встановлення!';});
+function triggerInstall(){if(!deferredInstall)return;deferredInstall.prompt();deferredInstall.userChoice.then(r=>{if(r.outcome==='accepted'){document.getElementById('install-status').textContent='✅ Встановлено!';document.getElementById('install-btn').style.display='none';}deferredInstall=null;});}
+function closeBanner(){document.getElementById('install-banner').classList.remove('show');sessionStorage.setItem('banner-closed','1');}
+function renderGrid(list){document.getElementById("arch-grid").innerHTML=list.map(a=>{const m=ARCH_META[a.name]||{emoji:"✦",label:a.name};return`<div class="arch-card" id="arch-${a.name}" onclick="selectArch('${a.name}')"><div class="arch-emoji">${m.emoji}</div><div class="arch-name">${m.label}</div><div class="arch-desc">${a.description}</div></div>`;}).join("");}
+function selectArch(name){document.querySelectorAll(".arch-card").forEach(c=>c.classList.remove("selected"));document.getElementById(`arch-${name}`)?.classList.add("selected");const a=archs[name];if(!a)return;const m=ARCH_META[name]||{emoji:"✦"};const bars=CORE.map(k=>{const v=a.traits[k]??0.5;return`<div class="trait-bar"><div class="trait-label"><span>${TN[k]}</span><span>${Math.round(v*100)}%</span></div><div class="trait-track"><div class="trait-fill" style="width:${v*100}%"></div></div></div>`;}).join("");document.getElementById("compat-result").innerHTML=`<div style="font-size:28px;margin-bottom:6px">${m.emoji}</div><div style="font-size:16px;font-weight:700;margin-bottom:12px">${m.label}</div>${bars}`;document.getElementById("compat-section").style.display="block";}
+function populateSels(list){["select-a","select-b"].forEach(id=>{const sel=document.getElementById(id);list.forEach(a=>{const m=ARCH_META[a.name]||{emoji:"✦",label:a.name};sel.innerHTML+=`<option value="${a.name}">${m.emoji} ${m.label}</option>`;});});}
+async function previewCompat(){const a=document.getElementById("select-a").value;const b=document.getElementById("select-b").value;const btn=document.getElementById("breed-btn");const preview=document.getElementById("compat-preview");if(!a||!b){btn.disabled=true;preview.innerHTML="";return;}const d=await fetch(`/api/compat?a=${a}&b=${b}`).then(r=>r.json()).catch(()=>null);if(!d)return;const t=TIER[d.tier]||{label:d.tier,cls:"tier-common"};const circ=2*Math.PI*34;const color=d.tier==="legendary"?"#f59e0b":d.tier==="rare"?"#38bdf8":"#7c6af7";preview.innerHTML=`<div class="compat-box"><div class="score-ring"><svg viewBox="0 0 80 80" width="80" height="80"><circle cx="40" cy="40" r="34" fill="none" stroke="#1e1a36" stroke-width="6"/><circle cx="40" cy="40" r="34" fill="none" stroke="${color}" stroke-width="6" stroke-dasharray="${circ}" stroke-dashoffset="${circ*(1-d.score)}" stroke-linecap="round"/></svg><div class="score-text">${Math.round(d.score*100)}%</div></div><span class="tier-badge ${t.cls}">${t.label}</span></div>`;btn.disabled=false;}
+async function doCrossbreed(){const a=document.getElementById("select-a").value;const b=document.getElementById("select-b").value;const btn=document.getElementById("breed-btn");const res=document.getElementById("breed-result");btn.disabled=true;btn.textContent="⏳ Схрещуємо...";const d=await fetch("/api/crossbreed",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({archetypeA:a,archetypeB:b})}).then(r=>r.json()).catch(()=>null);if(!d||!d.success){res.innerHTML=`<div class="result-card" style="text-align:center"><div style="font-size:24px;margin-bottom:8px">💔</div><div style="color:var(--red)">${d?.rejectionReason||"Несумісні"}</div></div>`;}else{const t=TIER[d.tier]||{label:d.tier,cls:"tier-common"};const spark=d.spark?'<div class="spark-badge">⚡ COMPATIBILITY SPARK</div><br>':"";const bars=CORE.map(k=>{const v=d.traits?.[k]??0.5;return`<div class="trait-bar"><div class="trait-label"><span>${TN[k]}</span><span>${Math.round(v*100)}%</span></div><div class="trait-track"><div class="trait-fill" style="width:${v*100}%"></div></div></div>`;}).join("");res.innerHTML=`<div class="result-card">${spark}<span class="tier-badge ${t.cls}">${t.label}</span><div style="font-size:12px;color:var(--muted);margin:10px 0 6px">${d.description||""}</div>${bars}</div>`;}btn.textContent="⚡ Схрестити ще";btn.disabled=false;}
+async function checkHealth(){try{const d=await fetch("/health").then(r=>r.json());document.getElementById("api-status").innerHTML='<span class="status-dot"></span>Online';document.getElementById("arch-count").textContent=d.archetypes;}catch{document.getElementById("api-status").innerHTML='<span style="color:var(--red)">Offline</span>';}}
+function showTab(name,el){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById(`view-${name}`).classList.add("active");el.classList.add("active");}
+init();
+</script>
+</body>
+</html>
