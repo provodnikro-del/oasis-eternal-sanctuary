@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Oasis Eternal Sanctuary — server.js v1.1.0
+ * Oasis Eternal Sanctuary — server.js v1.2.0
  * Sprint 1: Memory · Emotions · Moods · Streaks · Karma · World Events · WebSocket · Daily Rituals · Groq Chat · Compat API · Emotion Map
  * Sprint 2: Autonomous Agent — ReAct /agent/act · Tick /agent/tick · Composio tools (Twitter, Telegram, Instagram)
  */
@@ -19,6 +19,13 @@ const GROQ_KEY  = process.env.GROQ_API_KEY || '';
 const GROQ_URL  = 'https://api.groq.com/openai/v1/chat/completions';
 const GEMINI_KEY = process.env.GEMINI_API_KEY || '';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+
+
+const GITHUB_PAT  = process.env.GITHUB_PAT || '';
+const GITHUB_REPO = 'provodnikro-del/oasis-eternal-sanctuary';
+const GITHUB_STATE_FILE = 'agents-state.json';
+let   _ghStateSha = null;  // cached SHA for PUT operations
+let   _ghSaveTimer = null; // debounce timer
 
 // ─── Composio / Autonomous Agent ───────────────────────────────────────────
 const COMPOSIO_KEY         = process.env.COMPOSIO_API_KEY || '';
@@ -125,7 +132,64 @@ function loadStore() {
   }
   return store;
 }
-function saveStore(s) { fs.writeFileSync(DATA_FILE, JSON.stringify(s, null, 2)); }
+function saveStore(s) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(s, null, 2));
+  scheduleGithubSave(s);
+}
+
+// ─── GitHub Persistence ─────────────────────────────────────────────────────
+async function loadStoreFromGitHub() {
+  if (!GITHUB_PAT) return null;
+  try {
+    const resp = await new Promise((resolve, reject) => {
+      const url = new URL(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_STATE_FILE}`);
+      const req = https.request({ hostname: url.hostname, path: url.pathname,
+        headers: { 'Authorization': `token ${GITHUB_PAT}`, 'User-Agent': 'oasis-server', 'Accept': 'application/vnd.github.v3+json' }
+      }, res => {
+        let d = ''; res.on('data', c => d += c); res.on('end', () => resolve({ status: res.statusCode, body: d }));
+      });
+      req.on('error', reject); req.end();
+    });
+    if (resp.status === 404) { console.log('[GH] agents-state.json not found — will create on first save'); return null; }
+    if (resp.status !== 200) { console.log('[GH] load status', resp.status); return null; }
+    const data = JSON.parse(resp.body);
+    _ghStateSha = data.sha;
+    const store = JSON.parse(Buffer.from(data.content, 'base64').toString('utf8'));
+    console.log('[GH] ✅ Loaded agents state from GitHub (' + Object.keys(store.agents||{}).length + ' agents)');
+    return store;
+  } catch(e) { console.error('[GH] load error:', e.message); return null; }
+}
+
+function scheduleGithubSave(store) {
+  if (!GITHUB_PAT) return;
+  if (_ghSaveTimer) clearTimeout(_ghSaveTimer);
+  // Clone store to avoid mutation during timeout
+  const snapshot = JSON.parse(JSON.stringify(store));
+  _ghSaveTimer = setTimeout(() => pushStoreToGitHub(snapshot), 30000);
+}
+
+async function pushStoreToGitHub(store) {
+  if (!GITHUB_PAT) return;
+  try {
+    const contentB64 = Buffer.from(JSON.stringify(store, null, 2)).toString('base64');
+    const body = JSON.stringify({ message: 'chore: auto-save agents state', content: contentB64, ...(_ghStateSha ? { sha: _ghStateSha } : {}) });
+    const resp = await new Promise((resolve, reject) => {
+      const req = https.request({ hostname: 'api.github.com', path: `/repos/${GITHUB_REPO}/contents/${GITHUB_STATE_FILE}`,
+        method: 'PUT', headers: { 'Authorization': `token ${GITHUB_PAT}`, 'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(body), 'User-Agent': 'oasis-server', 'Accept': 'application/vnd.github.v3+json' }
+      }, res => {
+        let d = ''; res.on('data', c => d += c); res.on('end', () => resolve({ status: res.statusCode, body: d }));
+      });
+      req.on('error', reject); req.write(body); req.end();
+    });
+    if (resp.status === 200 || resp.status === 201) {
+      const data = JSON.parse(resp.body);
+      _ghStateSha = data.content.sha;
+      console.log('[GH] ✅ Saved agents state to GitHub');
+    } else { console.error('[GH] save status', resp.status, resp.body.slice(0,200)); }
+  } catch(e) { console.error('[GH] save error:', e.message); }
+}
+// ─── End GitHub Persistence ──────────────────────────────────────────────────
 
 const uid = () => crypto.randomUUID();
 
@@ -1694,10 +1758,20 @@ INPUT: (JSON с параметрами)`;
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`🌿 GodLocal Oasis v1.0.3 on :${PORT}`);
-  console.log('   Intelligence Engine: ReAct loop · web search · think/remember · write_code · social tools');
-  console.log(`   Tools: ${Object.keys(AGENT_TOOLS).filter(t=>t!=='none').join(', ')}`);
-  console.log(`   Composio: ${COMPOSIO_KEY?'✅ enabled — '+[TWITTER_ACCOUNT_ID,TELEGRAM_ACCOUNT_ID,GITHUB_ACCOUNT_ID].filter(Boolean).length+' accounts':'⚠️ COMPOSIO_API_KEY not set'}`);
-  console.log(`   Schedule: /api/schedule GET/POST/run`);
-});
+async function startServer() {
+  // ── GitHub: load persisted state before accepting traffic ──────────────────
+  const ghStore = await loadStoreFromGitHub();
+  if (ghStore) {
+    try { fs.writeFileSync(DATA_FILE, JSON.stringify(ghStore, null, 2)); }
+    catch(e) { console.error('[GH] failed to seed /tmp:', e.message); }
+  }
+  server.listen(PORT, () => {
+    console.log(`🌿 GodLocal Oasis v1.2.0 on :${PORT}`);
+    console.log('   Intelligence Engine: ReAct loop · web search · think/remember · write_code');
+    console.log(`   Tools: ${Object.keys(AGENT_TOOLS).filter(t=>t!=='none').join(', ')}`);
+    console.log(`   Composio: ${COMPOSIO_KEY?'✅ enabled — '+[GITHUB_ACCOUNT_ID].filter(Boolean).length+' accounts':'⚠️ COMPOSIO_API_KEY not set'}`);
+    console.log(`   GitHub Persistence: ${GITHUB_PAT?'✅ enabled — agents-state.json':'⚠️ GITHUB_PAT not set (in-memory only)'}`);
+    console.log(`   Schedule: /api/schedule GET/POST/run`);
+  });
+}
+startServer();
