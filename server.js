@@ -721,7 +721,7 @@ route('GET', '/', (req, res) => {
 });
 
 route('GET', '/health', (req, res) => send(res, 200, {
-  status: 'ok', version: '0.9.0',
+  status: 'ok', version: '0.9.1',
   groq: !!GROQ_KEY, gemini: !!GEMINI_KEY, composio: !!COMPOSIO_KEY,
   tools: Object.keys(AGENT_TOOLS).filter(t => t !== 'none'),
 }));
@@ -898,7 +898,12 @@ async function runReActChat(agent, userMsg, wev) {
     '3. Для сложных задач — думаешь пошагово (think)',
     '4. Отвечаешь прямо: факты + позиция + действие',
     '5. Без воды, без лести, без "отличный вопрос"',
-    '6. Если не знаешь — говоришь честно и ищешь',
+    '6. Если не знаешь — ВСЕГДА вызывай search_web, никогда не придумывай данные',
+    '',
+    '## ВАЖНО: Использование инструментов',
+    'Если пользователь спрашивает факты, новости, цены, события — ОБЯЗАТЕЛЬНО вызови search_web.',
+    'НЕ имитируй поиск текстом — вызывай реальный инструмент search_web(query).',
+    'НЕ говори "я поищу" — просто вызови инструмент.',
     '',
     '## Память',
     mem,
@@ -912,6 +917,19 @@ async function runReActChat(agent, userMsg, wev) {
 
   const toolResults = [];
   let finalText = null;
+
+  // Pre-emptive search for factual queries (price, news, current events)
+  const searchTriggers = /цен[аы]|стоимость|сейчас|текущ|найди|поищи|price|search|news|bitcoin|btc|eth|крипт/i;
+  if (searchTriggers.test(userMsg)) {
+    const preSearch = await webSearch(userMsg);
+    if (preSearch && !preSearch.startsWith('Поиск')) {
+      messages.push({ role: 'system', content: `Результаты поиска по запросу пользователя:
+${preSearch}
+
+Используй эти данные в ответе.` });
+      toolResults.push({ tool: 'search_web', query: userMsg, result: preSearch.slice(0, 200) });
+    }
+  }
 
   // ReAct: up to 3 iterations
   for (let iter = 0; iter < 3; iter++) {
