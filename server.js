@@ -230,11 +230,11 @@ async function callGemini(prompt) {
 async function composioAction(actionSlug, connectedAccountId, input) {
   if (!COMPOSIO_KEY) return { ok: false, error: 'COMPOSIO_API_KEY not set' };
   return new Promise((resolve) => {
-    const body = JSON.stringify({ connectedAccountId, input });
+    const body = JSON.stringify({ actionName: actionSlug, connectedAccountId, input });
     const https = require('https');
     const options = {
       hostname: 'backend.composio.dev',
-      path: `/api/v1/actions/${actionSlug}/execute`,
+      path: '/api/v2/actions/execute',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -246,12 +246,16 @@ async function composioAction(actionSlug, connectedAccountId, input) {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
-        try { resolve({ ok: true, data: JSON.parse(data) }); }
-        catch { resolve({ ok: false, error: data }); }
+        try {
+          const parsed = JSON.parse(data);
+          // v2 returns { data: { ... } } on success, or { error } on fail
+          if (parsed.error) { resolve({ ok: false, error: parsed.error }); return; }
+          resolve({ ok: true, data: parsed.data ?? parsed });
+        } catch { resolve({ ok: false, error: data }); }
       });
     });
     req.on('error', (e) => resolve({ ok: false, error: e.message }));
-    req.setTimeout(12000, () => { req.destroy(); resolve({ ok: false, error: 'timeout' }); });
+    req.setTimeout(15000, () => { req.destroy(); resolve({ ok: false, error: 'timeout' }); });
     req.write(body);
     req.end();
   });
@@ -263,9 +267,9 @@ const AGENT_TOOLS = {
     desc: 'Post a tweet to Twitter @kitbtc (max 280 chars)',
     params: 'text (string)',
     exec: async (p) => composioAction(
-      'TWITTER_CREATION_CREATION_FUNCTIONAL_ENDPOINT',
+      'TWITTER_CREATION_OF_A_POST',
       TWITTER_ACCOUNT_ID,
-      { tweet_text: String(p.text || '').slice(0, 280) }
+      { text: String(p.text || '').slice(0, 280) }
     ),
   },
   telegram_send: {
