@@ -721,7 +721,7 @@ route('GET', '/', (req, res) => {
 });
 
 route('GET', '/health', (req, res) => send(res, 200, {
-  status: 'ok', version: '0.9.1',
+  status: 'ok', version: '0.9.2',
   groq: !!GROQ_KEY, gemini: !!GEMINI_KEY, composio: !!COMPOSIO_KEY,
   tools: Object.keys(AGENT_TOOLS).filter(t => t !== 'none'),
 }));
@@ -785,29 +785,63 @@ route('POST', '/api/agents/:id/care', async (req,res,p) => {
 
 // ─── Web Search (DuckDuckGo, no API key needed) ─────────────────────────────
 async function webSearch(query) {
-  return new Promise((resolve) => {
-    const q = encodeURIComponent(query);
-    const url = new URL(`https://api.duckduckgo.com/?q=${q}&format=json&no_html=1&skip_disambig=1`);
-    const options = { hostname: url.hostname, path: url.pathname + url.search, method: 'GET',
-      headers: { 'User-Agent': 'GodLocal-Agent/0.9 (godlocal.io)', 'Accept': 'application/json' } };
-    const mod = require('https');
-    let data = '';
-    const req = mod.request(options, (res) => {
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        try {
-          const j = JSON.parse(data);
-          const results = [];
-          if (j.Abstract) results.push(j.Abstract);
-          (j.RelatedTopics || []).slice(0, 4).forEach(t => { if (t.Text) results.push(t.Text); });
-          resolve(results.length ? results.join('\n') : 'Нет результатов по запросу: ' + query);
-        } catch(e) { resolve('Ошибка поиска: ' + e.message); }
+  const mod = require('https');
+  function httpsGet(options) {
+    return new Promise((resolve) => {
+      let data = '';
+      const req = mod.request(options, (res) => {
+        res.on('data', c => data += c);
+        res.on('end', () => resolve(data));
       });
+      req.on('error', e => resolve(''));
+      req.setTimeout(7000, () => { req.destroy(); resolve(''); });
+      req.end();
     });
-    req.on('error', e => resolve('Поиск недоступен: ' + e.message));
-    req.setTimeout(6000, () => { req.destroy(); resolve('Поиск: таймаут'); });
-    req.end();
-  });
+  }
+
+  const q = query.toLowerCase();
+
+  // ── Crypto prices → CoinGecko ────────────────────────────────────────────
+  const cryptoMap = { bitcoin:'bitcoin',btc:'bitcoin',биткоин:'bitcoin',биткойн:'bitcoin',
+    ethereum:'ethereum',eth:'ethereum',эфир:'ethereum',эфириум:'ethereum',
+    solana:'solana',sol:'solana',солана:'solana',bnb:'binancecoin',sui:'sui' };
+  const foundCoin = Object.entries(cryptoMap).find(([k]) => q.includes(k));
+  if (foundCoin) {
+    const raw = await httpsGet({ hostname:'api.coingecko.com',
+      path:`/api/v3/simple/price?ids=${foundCoin[1]},bitcoin,ethereum,solana&vs_currencies=usd,rub`,
+      headers:{'User-Agent':'GodLocal/0.9'} });
+    try {
+      const j = JSON.parse(raw);
+      const lines = Object.entries(j).map(([coin, vals]) =>
+        `${coin.toUpperCase()}: $${vals.usd?.toLocaleString()} USD / ₽${vals.rub?.toLocaleString()} RUB`);
+      return '📊 Актуальные цены (CoinGecko):\n' + lines.join('\n');
+    } catch(e) {}
+  }
+
+  // ── General knowledge → Wikipedia (Russian) ───────────────────────────────
+  const wikiQ = encodeURIComponent(query);
+  const wikiPath = `/w/api.php?action=query&list=search&srsearch=${wikiQ}&format=json&srlimit=3&utf8=1&srprop=snippet`;
+  const wikiRaw = await httpsGet({ hostname:'ru.wikipedia.org', path: wikiPath,
+    headers:{'User-Agent':'GodLocal/0.9 (godlocal.io)'} });
+  try {
+    const j = JSON.parse(wikiRaw);
+    const results = (j.query?.search || []).map(r =>
+      `${r.title}: ${r.snippet.replace(/<[^>]+>/g, '')}`);
+    if (results.length) return '🔍 Из Wikipedia:\n' + results.join('\n');
+  } catch(e) {}
+
+  // ── Fallback: English Wikipedia ───────────────────────────────────────────
+  const enWikiRaw = await httpsGet({ hostname:'en.wikipedia.org',
+    path:`/w/api.php?action=query&list=search&srsearch=${wikiQ}&format=json&srlimit=2&utf8=1&srprop=snippet`,
+    headers:{'User-Agent':'GodLocal/0.9'} });
+  try {
+    const j = JSON.parse(enWikiRaw);
+    const results = (j.query?.search || []).map(r =>
+      `${r.title}: ${r.snippet.replace(/<[^>]+>/g, '')}`);
+    if (results.length) return '🔍 Search results:\n' + results.join('\n');
+  } catch(e) {}
+
+  return `Поиск не дал результатов для: ${query}`;
 }
 
 // ─── Groq Tool Calling ──────────────────────────────────────────────────────
