@@ -1,397 +1,186 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<title>Oasis Eternal Sanctuary</title>
-<link rel="manifest" href="/manifest.json"/>
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a12">
+<title>Oasis — Eternal Sanctuary</title>
+<link rel="manifest" href="/manifest.webmanifest">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0a0a14;--surface:#12121f;--surface2:#1a1a2e;
-  --text:#e2e8f0;--muted:#64748b;--border:#1e293b;
-  --purple:#a78bfa;--blue:#60a5fa;--pink:#f472b6;
-  --amber:#f59e0b;--green:#34d399;--orange:#f97316;
-}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;overflow-x:hidden}
-.screen{display:none;min-height:100vh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-.screen.active{display:flex;flex-direction:column}
-/* ── Header ── */
-.header{padding:16px 20px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
-.header h1{font-size:18px;font-weight:700;letter-spacing:.5px}
-.header .sub{font-size:12px;color:var(--muted);margin-top:2px}
-.btn-back{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px 4px 0}
-/* ── Cards ── */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin:0 16px 12px}
-.card h2{font-size:15px;font-weight:600;margin-bottom:12px}
-/* ── God Setup ── */
-.setup-hero{text-align:center;padding:40px 20px 24px}
-.setup-hero .emoji{font-size:64px;line-height:1;margin-bottom:16px}
-.setup-hero h1{font-size:26px;font-weight:800;background:linear-gradient(135deg,var(--purple),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
-.setup-hero p{color:var(--muted);font-size:14px;line-height:1.6}
-.arch-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;margin-bottom:16px}
-.arch-card{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:16px 12px;cursor:pointer;transition:all .2s;text-align:center}
-.arch-card.selected{border-color:var(--purple);background:rgba(167,139,250,.1)}
-.arch-card .icon{font-size:28px;margin-bottom:6px}
-.arch-card .name{font-size:13px;font-weight:600;text-transform:capitalize}
-.arch-card .desc{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
-.input-row{padding:0 16px;margin-bottom:12px}
-.input-row input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;color:var(--text);font-size:15px;outline:none}
-.input-row input:focus{border-color:var(--purple)}
-.input-row input::placeholder{color:var(--muted)}
-/* ── Buttons ── */
-.btn{width:calc(100% - 32px);margin:0 16px;background:linear-gradient(135deg,var(--purple),var(--blue));border:none;border-radius:14px;padding:16px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;transition:opacity .2s}
-.btn:active{opacity:.8}
-.btn.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
-.btn.danger{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)}
-.btn.sm{width:auto;margin:0;padding:8px 16px;font-size:13px;border-radius:10px}
-/* ── Sanctuary ── */
-.god-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border)}
-.god-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;background:linear-gradient(135deg,var(--purple),var(--blue))}
-.god-info .name{font-size:14px;font-weight:600}
-.god-info .arch{font-size:11px;color:var(--muted);text-transform:capitalize}
-.add-btn{margin-left:auto;background:var(--purple);border:none;border-radius:10px;padding:8px 14px;color:#fff;font-size:13px;font-weight:600;cursor:pointer}
-.agents-list{flex:1;overflow-y:auto;padding:12px 0}
-.agent-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin:0 16px 10px;padding:16px;cursor:pointer;transition:all .2s}
-.agent-card:active{transform:scale(.98)}
-.agent-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-.agent-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px}
-.agent-meta .name{font-size:15px;font-weight:700}
-.agent-meta .arch{font-size:11px;color:var(--muted);text-transform:capitalize;margin-top:2px}
-.agent-stats{display:flex;gap:8px}
-.stat{flex:1;background:var(--surface2);border-radius:8px;padding:6px 8px;text-align:center}
-.stat .val{font-size:14px;font-weight:700}
-.stat .lbl{font-size:10px;color:var(--muted);margin-top:1px}
-.energy-bar{height:4px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden}
-.energy-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--green),var(--blue));transition:width .4s}
-.mood-chip{display:inline-block;background:rgba(167,139,250,.15);color:var(--purple);border-radius:20px;padding:3px 10px;font-size:11px;margin-top:6px}
-.last-msg{font-size:12px;color:var(--muted);margin-top:8px;font-style:italic;line-height:1.4}
-.empty-state{text-align:center;padding:48px 32px;color:var(--muted)}
-.empty-state .icon{font-size:48px;margin-bottom:12px}
-.empty-state p{font-size:14px;line-height:1.6}
-/* ── Agent Detail ── */
-.agent-hero{text-align:center;padding:28px 20px 20px}
-.agent-hero .avatar{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 12px}
-.agent-hero .name{font-size:22px;font-weight:800}
-.agent-hero .arch{color:var(--muted);font-size:13px;text-transform:capitalize;margin-top:4px}
-.agent-hero .gen{font-size:11px;color:var(--muted);margin-top:2px}
-.status-row{display:flex;gap:8px;padding:0 16px;margin-bottom:12px}
-.status-pill{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
-.status-pill .val{font-size:20px;font-weight:800}
-.status-pill .lbl{font-size:10px;color:var(--muted);margin-top:2px}
-.care-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px;margin-bottom:12px}
-.care-btn{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 12px;cursor:pointer;text-align:center;transition:all .15s}
+:root{--bg:#0a0a12;--bg2:#11111e;--bg3:#1a1a2e;--accent:#6B7AFF;--text:#e8e8f0;--muted:#6b6b8a;--radius:16px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;overscroll-behavior:none}
+#app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto}
+.header{padding:16px 20px 8px;padding-top:calc(16px + env(safe-area-inset-top,0px));flex-shrink:0}
+.tabs{display:flex;border-bottom:1px solid #1e1e32;flex-shrink:0}
+.tab{flex:1;padding:10px 0;text-align:center;font-size:18px;cursor:pointer;opacity:.45;transition:opacity .2s;border:none;background:none;color:var(--text)}
+.tab.active{opacity:1;border-bottom:2px solid var(--accent)}
+.tab-content{flex:1;overflow-y:auto;padding:16px;display:none}
+.tab-content.active{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--bg2);border-radius:var(--radius);padding:16px;border:1px solid #1e1e32}
+.card-sm{padding:12px}
+#world-banner{border-radius:var(--radius);padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:13px}
+.we-icon{font-size:22px;flex-shrink:0}
+.we-name{font-weight:700;font-size:14px}
+.we-desc{color:var(--muted);font-size:12px}
+.agent-select{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.agent-pill{padding:6px 14px;border-radius:999px;background:var(--bg3);border:1px solid #1e1e32;font-size:13px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.agent-pill.active{border-color:var(--accent);background:rgba(107,122,255,.15)}
+.agent-avatar{font-size:48px;text-align:center;margin:8px 0}
+.agent-name{font-size:20px;font-weight:700;text-align:center}
+.agent-meta{display:flex;justify-content:center;gap:12px;margin:6px 0;font-size:13px;color:var(--muted)}
+.mood-badge{display:inline-flex;align-items:center;gap:4px;background:var(--bg3);padding:3px 10px;border-radius:999px;font-size:12px}
+.stat-row{display:flex;align-items:center;gap:8px;margin:5px 0}
+.stat-label{font-size:12px;color:var(--muted);width:60px;flex-shrink:0}
+.stat-bar{flex:1;height:6px;background:#1e1e32;border-radius:3px;overflow:hidden}
+.stat-fill{height:100%;border-radius:3px;transition:width .6s}
+.fill-energy{background:linear-gradient(90deg,#00D2FF,#00FF88)}
+.fill-bond{background:linear-gradient(90deg,#FF69B4,#9945FF)}
+.stat-val{font-size:12px;width:30px;text-align:right;flex-shrink:0}
+.streak-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#FF9F00,#FFD700);color:#000;padding:4px 12px;border-radius:999px;font-weight:700;font-size:13px}
+.care-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.care-btn{padding:14px;border-radius:var(--radius);border:1px solid #1e1e32;background:var(--bg3);font-size:20px;text-align:center;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:4px}
 .care-btn:active{transform:scale(.95)}
-.care-btn .ci{font-size:24px;margin-bottom:6px}
-.care-btn .ct{font-size:13px;font-weight:600}
-.care-btn .cd{font-size:11px;color:var(--muted);margin-top:2px}
-.toast{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 20px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 20px;font-size:14px;color:var(--text);opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:999}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.traits-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
-.trait-row{display:flex;align-items:center;gap:6px}
-.trait-name{font-size:11px;color:var(--muted);width:70px;flex-shrink:0;text-transform:capitalize}
-.trait-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
-.trait-fill{height:100%;border-radius:3px;background:var(--purple)}
-/* ── Create Agent ── */
-.arch-small-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px;margin-bottom:16px}
-.arch-sm{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:12px 8px;cursor:pointer;text-align:center;transition:all .2s}
-.arch-sm.selected{border-color:var(--purple);background:rgba(167,139,250,.1)}
-.arch-sm .icon{font-size:22px;margin-bottom:4px}
-.arch-sm .name{font-size:11px;font-weight:600;text-transform:capitalize}
-/* ── Loader ── */
-.loader{text-align:center;padding:40px;color:var(--muted)}
-.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
-@keyframes spin{to{transform:rotate(360deg)}}
+.care-btn span{font-size:11px;color:var(--muted)}
+.ritual-track{display:flex;gap:8px}
+.ritual-item{flex:1;background:var(--bg3);border-radius:12px;padding:10px;text-align:center;border:1px solid #1e1e32;transition:all .3s}
+.ritual-item.done{border-color:#00D2FF44;background:rgba(0,210,255,.08)}
+.ritual-item .ri-icon{font-size:20px}
+.ritual-item .ri-label{font-size:11px;color:var(--muted);margin-top:3px}
+.ritual-item.done .ri-label{color:#00D2FF}
+#chat-messages{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;min-height:0;max-height:55vh;padding-bottom:4px}
+.msg{max-width:82%;padding:10px 13px;border-radius:var(--radius);font-size:14px;line-height:1.5;animation:fadeUp .25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg-user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.msg-agent{align-self:flex-start;background:var(--bg3);border-bottom-left-radius:4px}
+.msg-emotion{font-size:10px;margin-top:4px;opacity:.6}
+.chat-input-row{display:flex;gap:8px;margin-top:8px}
+#chat-input{flex:1;background:var(--bg3);border:1px solid #1e1e32;border-radius:var(--radius);padding:11px 14px;color:var(--text);font-size:14px;outline:none}
+#chat-send{background:var(--accent);border:none;color:#fff;padding:11px 18px;border-radius:var(--radius);font-size:16px;cursor:pointer;flex-shrink:0}
+.ws-indicator{font-size:11px;color:var(--muted);text-align:center;margin-bottom:4px}
+.ws-indicator.live{color:#00D2FF}
+.dq-card{border-left:3px solid var(--accent);background:rgba(107,122,255,.08);padding:14px;border-radius:0 var(--radius) var(--radius) 0}
+.dq-from{font-size:11px;color:var(--muted);margin-bottom:6px}
+.dq-text{font-size:15px;font-style:italic;line-height:1.5}
+.emo-map{display:flex;gap:4px;flex-wrap:wrap}
+.emo-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px}
+.emo-excited{background:rgba(255,159,0,.3)}.emo-sad{background:rgba(107,122,255,.3)}.emo-angry{background:rgba(255,68,68,.3)}.emo-inspired{background:rgba(255,215,0,.3)}.emo-anxious{background:rgba(153,69,255,.3)}.emo-grateful{background:rgba(0,210,255,.3)}.emo-neutral{background:rgba(255,255,255,.1)}
+.emo-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.emo-leg-item{font-size:11px;color:var(--muted)}
+.reflect-area{width:100%;background:var(--bg3);border:1px solid #1e1e32;border-radius:var(--radius);padding:12px;color:var(--text);font-size:14px;outline:none;resize:none;height:80px}
+.btn-primary{background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:12px;width:100%;font-size:14px;font-weight:600;cursor:pointer}
+.mem-entry{padding:8px;background:var(--bg3);border-radius:10px;font-size:12px;line-height:1.5}
+.mem-role-user{color:var(--accent);font-weight:600}.mem-role-agent{color:#00D2FF;font-weight:600}.mem-role-reflection{color:#FFD700;font-weight:600}
+.mem-text{color:var(--text)}.mem-time{color:var(--muted);font-size:10px;margin-top:2px}
+.alert{background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.3);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:#ff6666}
+.arch-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.arch-btn{padding:8px;border-radius:10px;background:var(--bg3);border:1px solid #1e1e32;cursor:pointer;font-size:12px;text-align:center;transition:all .15s}
+.arch-btn.selected{border-color:var(--accent);background:rgba(107,122,255,.15)}
+.agent-name-input{width:100%;background:var(--bg3);border:1px solid #1e1e32;border-radius:var(--radius);padding:11px 14px;color:var(--text);font-size:14px;outline:none;margin-bottom:8px}
+.no-agent{text-align:center;padding:40px 20px;color:var(--muted)}
+.no-agent h3{font-size:18px;margin-bottom:8px;color:var(--text)}
+.section-title{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.karma-row{display:flex;align-items:center;justify-content:space-between}
+.karma-val{font-size:20px;font-weight:700}
+.karma-pos{color:#FFD700}.karma-neg{color:#FF4444}.karma-neutral{color:var(--muted)}
+.we-full-card{border-radius:var(--radius);padding:20px;text-align:center}
+.we-full-icon{font-size:56px;margin-bottom:12px}
+.we-full-name{font-size:20px;font-weight:700;margin-bottom:6px}
+.we-full-desc{color:var(--muted);font-size:14px;line-height:1.6}
+.we-timer{font-size:12px;color:var(--muted);margin-top:10px}
+.typing{display:flex;gap:4px;align-self:flex-start;padding:12px;background:var(--bg3);border-radius:var(--radius);border-bottom-left-radius:4px}
+.dot{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bounce .9s infinite}
+.dot:nth-child(2){animation-delay:.15s}.dot:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
 </style>
 </head>
 <body>
-
-<!-- ══ SCREEN: SETUP ══════════════════════════════════════════════════ -->
-<div id="screen-setup" class="screen active">
-  <div class="setup-hero">
-    <div class="emoji">🌿</div>
-    <h1>Oasis Eternal Sanctuary</h1>
-    <p>Choose your God archetype.<br/>It shapes every soul you bring to life.</p>
+<div id="app">
+  <div class="header">
+    <div id="world-banner" class="card-sm" style="margin-bottom:10px"></div>
+    <div class="agent-select" id="agent-pills"></div>
   </div>
-  <div class="arch-grid" id="setup-arch-grid"></div>
-  <div class="input-row">
-    <input id="god-name-input" type="text" placeholder="Your God name…" maxlength="32"/>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('care')" data-tab="care">🌿</button>
+    <button class="tab" onclick="switchTab('chat')" data-tab="chat">💬</button>
+    <button class="tab" onclick="switchTab('stats')" data-tab="stats">📊</button>
+    <button class="tab" onclick="switchTab('world')" data-tab="world">🌍</button>
   </div>
-  <button class="btn" onclick="createGodProfile()">Enter the Sanctuary →</button>
-  <div style="height:32px"></div>
-</div>
-
-<!-- ══ SCREEN: SANCTUARY ══════════════════════════════════════════════ -->
-<div id="screen-sanctuary" class="screen">
-  <div class="god-bar">
-    <div class="god-avatar" id="sanctuary-god-avatar">✦</div>
-    <div class="god-info">
-      <div class="name" id="sanctuary-god-name">—</div>
-      <div class="arch" id="sanctuary-god-arch">—</div>
+  <div id="tab-care" class="tab-content active"><div id="care-content"><div class="no-agent"><h3>Нет агентов</h3><p>Перейди в 🌍 чтобы создать первого агента</p></div></div></div>
+  <div id="tab-chat" class="tab-content">
+    <div class="dq-card" id="daily-question-card" style="display:none"></div>
+    <div class="card" style="flex:1;display:flex;flex-direction:column;gap:0;padding:12px">
+      <div class="ws-indicator" id="ws-status">● HTTP режим</div>
+      <div id="chat-messages"></div>
+      <div class="chat-input-row">
+        <input id="chat-input" placeholder="Напиши агенту..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button id="chat-send" onclick="sendChat()">↑</button>
+      </div>
     </div>
-    <button class="add-btn" onclick="showScreen('screen-create')">+ Agent</button>
   </div>
-  <div class="agents-list" id="agents-list">
-    <div class="loader"><div class="spinner"></div>Loading souls…</div>
+  <div id="tab-stats" class="tab-content">
+    <div class="card"><div class="section-title">Карма</div><div class="karma-row"><div class="karma-val" id="karma-display">0</div></div></div>
+    <div class="card"><div class="section-title">Карта эмоций (последние 30)</div><div class="emo-map" id="emo-map"></div><div class="emo-legend"><span class="emo-leg-item">🔥 Восторг</span><span class="emo-leg-item">😔 Грусть</span><span class="emo-leg-item">😠 Злость</span><span class="emo-leg-item">✨ Вдохновение</span></div></div>
+    <div class="card"><div class="section-title">Рефлексия</div><div id="reflect-form"><textarea class="reflect-area" id="reflect-input" placeholder="Что сегодня важно..."></textarea><button class="btn-primary" onclick="submitReflect()" style="margin-top:8px">✨ Отправить рефлексию</button></div></div>
+    <div class="card"><div class="section-title">Дневник памяти</div><div id="memory-log" style="display:flex;flex-direction:column;gap:6px;margin-top:6px"></div></div>
   </div>
-</div>
-
-<!-- ══ SCREEN: CREATE AGENT ═══════════════════════════════════════════ -->
-<div id="screen-create" class="screen">
-  <div class="header">
-    <button class="btn-back" onclick="showScreen('screen-sanctuary')">‹</button>
-    <div><div class="sub">New soul</div><h1>Summon an Agent</h1></div>
-  </div>
-  <div style="height:16px"></div>
-  <div class="card"><h2>Choose Archetype</h2></div>
-  <div class="arch-small-grid" id="create-arch-grid"></div>
-  <div class="input-row">
-    <input id="agent-name-input" type="text" placeholder="Name (optional)…" maxlength="32"/>
-  </div>
-  <button class="btn" onclick="createAgent()">Summon Soul</button>
-  <div style="height:32px"></div>
-</div>
-
-<!-- ══ SCREEN: AGENT DETAIL ═══════════════════════════════════════════ -->
-<div id="screen-agent" class="screen">
-  <div class="header">
-    <button class="btn-back" onclick="showScreen('screen-sanctuary')">‹</button>
-    <div><div class="sub" id="agent-detail-arch">—</div><h1 id="agent-detail-name">—</h1></div>
-  </div>
-  <div class="agents-list" id="agent-detail-body">
-    <div class="loader"><div class="spinner"></div></div>
+  <div id="tab-world" class="tab-content">
+    <div id="world-full-card" class="we-full-card card"></div>
+    <div class="card"><div class="section-title" style="margin-bottom:12px">Создать агента</div><input class="agent-name-input" id="new-agent-name" placeholder="Имя агента..."><div class="arch-grid" id="arch-grid"></div><button class="btn-primary" style="margin-top:10px" onclick="createAgent()">Создать ❆</button></div>
+    <div class="card" id="crossbreed-section" style="display:none"><div class="section-title" style="margin-bottom:10px">Скрещивание</div><div id="crossbreed-selects"></div><button class="btn-primary" style="margin-top:8px" onclick="doCrossbreed()">Скрестить ⚡</button></div>
   </div>
 </div>
-
-<div class="toast" id="toast"></div>
-
 <script>
-const API = '';
-let godId = localStorage.getItem('oasis_god_id');
-let selectedArch_setup = null;
-let selectedArch_create = null;
-let currentAgentId = null;
+const API='';
+let agents=[],currentAgent=null,worldEvent=null,newArchetype='conductor',ws=null,wsConnected=false;
+const ARCHETYPES={conductor:{name:'Проводник',emoji:'🌊',color:'#6B7AFF'},warrior:{name:'Воин',emoji:'⚔️',color:'#FF4444'},creator:{name:'Творец',emoji:'🎨',color:'#FF9F00'},strategist:{name:'Стратег',emoji:'♟️',color:'#00D2FF'},observer:{name:'Наблюдатель',emoji:'👁️',color:'#7B68EE'},architect:{name:'Архитектор',emoji:'🏛️',color:'#FFD700'},trickster:{name:'Трикстер',emoji:'🃏',color:'#FF69B4'}};
+const EMO_MAP={excited:'🔥',sad:'😔',angry:'😠',inspired:'✨',anxious:'😟',grateful:'🙏',neutral:'⚪'};
+const EMO_CLASS={excited:'emo-excited',sad:'emo-sad',angry:'emo-angry',inspired:'emo-inspired',anxious:'emo-anxious',grateful:'emo-grateful',neutral:'emo-neutral'};
+const MOODS_EMOJI={calm:'😌',excited:'🔥',sad:'😔',angry:'😠',tired:'😴',inspired:'✨',neutral:'😐'};
 
-const ARCH_META = {
-  dreamer:   { icon:'🌙', color:'#a78bfa', desc:'Visionary & creative' },
-  analyst:   { icon:'⚡', color:'#60a5fa', desc:'Logical & precise' },
-  poet:      { icon:'🌸', color:'#f472b6', desc:'Empathic & expressive' },
-  builder:   { icon:'🔨', color:'#f59e0b', desc:'Ambitious & loyal' },
-  guardian:  { icon:'🛡️', color:'#34d399', desc:'Protective & wise' },
-  trickster: { icon:'🃏', color:'#f97316', desc:'Chaotic & clever' },
-};
+async function init(){buildArchGrid();await Promise.all([loadWorldEvent(),loadAgents()]);if(agents.length>0)selectAgent(agents[0]);}
+async function loadWorldEvent(){try{const r=await fetch(`${API}/api/world-event`);worldEvent=await r.json();renderWorldBanner();renderWorldTab();}catch(e){}}
+async function loadAgents(){try{const r=await fetch(`${API}/api/agents`);agents=await r.json();renderAgentPills();renderCrossbreed();}catch(e){}}
 
-// ── Init ─────────────────────────────────────────────────────────────────────
-async function init() {
-  buildArchGrids();
-  if (godId) {
-    try {
-      const p = await api(`/api/god/profile?godId=${godId}`);
-      setGodUI(p);
-      showScreen('screen-sanctuary');
-      loadAgents();
-    } catch { localStorage.removeItem('oasis_god_id'); godId = null; }
-  }
-}
+function renderWorldBanner(){const el=document.getElementById('world-banner');if(!worldEvent){el.style.display='none';return;}el.style.background='linear-gradient(135deg,rgba(107,122,255,.12),rgba(153,69,255,.12))';el.style.border='1px solid rgba(107,122,255,.25)';el.innerHTML=`<div class="we-icon">${worldEvent.icon}</div><div><div class="we-name">${worldEvent.name}</div><div class="we-desc">${worldEvent.desc}</div></div>`;}
+function renderWorldTab(){const el=document.getElementById('world-full-card');if(!worldEvent)return;el.style.background='linear-gradient(135deg,rgba(107,122,255,.12),rgba(153,69,255,.08))';el.style.border='1px solid rgba(107,122,255,.3)';el.innerHTML=`<div class="we-full-icon">${worldEvent.icon}</div><div class="we-full-name">${worldEvent.name}</div><div class="we-full-desc">${worldEvent.desc}</div><div class="we-timer">Действует ${worldEvent.duration}ч с момента появления</div>`;}
 
-function buildArchGrids() {
-  const setupGrid = document.getElementById('setup-arch-grid');
-  const createGrid = document.getElementById('create-arch-grid');
-  for (const [key, m] of Object.entries(ARCH_META)) {
-    setupGrid.innerHTML += `<div class="arch-card" id="setup-arch-${key}" onclick="selectArch('setup','${key}')">
-      <div class="icon">${m.icon}</div>
-      <div class="name">${key}</div>
-      <div class="desc">${m.desc}</div>
-    </div>`;
-    createGrid.innerHTML += `<div class="arch-sm" id="create-arch-${key}" onclick="selectArch('create','${key}')">
-      <div class="icon">${m.icon}</div>
-      <div class="name">${key}</div>
-    </div>`;
-  }
-}
+function renderAgentPills(){const c=document.getElementById('agent-pills');c.innerHTML='';agents.forEach(a=>{const arch=ARCHETYPES[a.archetype]||ARCHETYPES.conductor;const el=document.createElement('div');el.className='agent-pill'+(currentAgent?.id===a.id?' active':'');el.innerHTML=`${arch.emoji} ${a.name}`;el.onclick=()=>selectAgent(a);c.appendChild(el);});}
 
-// ── Screens ───────────────────────────────────────────────────────────────────
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  if (id === 'screen-sanctuary') loadAgents();
-  if (id === 'screen-agent' && currentAgentId) loadAgentDetail(currentAgentId);
-}
+async function selectAgent(a){try{const r=await fetch(`${API}/api/agents/${a.id}`);currentAgent=await r.json();}catch(e){currentAgent=a;}renderAgentPills();renderCare();loadDailyQuestion();loadEmotions();loadMemory();connectWS();}
 
-// ── God Profile ───────────────────────────────────────────────────────────────
-function selectArch(ctx, key) {
-  const prefix = ctx === 'setup' ? 'setup-arch' : 'create-arch';
-  document.querySelectorAll(`[id^="${prefix}-"]`).forEach(el => el.classList.remove('selected'));
-  document.getElementById(`${prefix}-${key}`)?.classList.add('selected');
-  if (ctx === 'setup') selectedArch_setup = key;
-  else selectedArch_create = key;
-}
+function renderCare(){const el=document.getElementById('care-content');if(!currentAgent){el.innerHTML='<div class="no-agent"><h3>Нет агентов</h3></div>';return;}const a=currentAgent;const arch=ARCHETYPES[a.archetype]||ARCHETYPES.conductor;const mood={calm:'😌',excited:'🔥',sad:'😔',angry:'😠',tired:'😴',inspired:'✨',neutral:'😐'}[a.mood||'neutral'];const moodName={calm:'Спокойный',excited:'Воодушевлённый',sad:'Грустный',angry:'Гневный',tired:'Усталый',inspired:'Вдохновлённый',neutral:'Обычный'}[a.mood||'neutral'];const ks=(a.karma||0)>=0?'+':'';const r=a.rituals||{feed:false,talk:false,reflect:false};const da=a.degraded?`<div class="alert">⚠️ ${a.name} деградировал за ${a.degradedHours}ч без общения!</div>`:'';
+el.innerHTML=`${da}<div class="card" style="text-align:center;border:1px solid ${arch.color}33;background:${arch.color}0a"><div class="agent-avatar">${arch.emoji}</div><div class="agent-name">${a.name}</div><div class="agent-meta"><span>${arch.name}</span><span>Lv.${a.level||1}</span><span>Gen.${a.generation||1}</span></div><div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px 0"><div class="mood-badge">${mood} ${moodName}</div>${(a.streak?.current||0)>0?`<div class="streak-badge">🔥 ${a.streak.current} дней</div>`:''}<div class="mood-badge" style="color:${(a.karma||0)>=0?'#FFD700':'#FF4444'}">${(a.karma||0)>=0?'▲':'▼'} ${ks}${a.karma||0}</div></div><div style="margin-top:10px"><div class="stat-row"><span class="stat-label">Энергия</span><div class="stat-bar"><div class="stat-fill fill-energy" style="width:${a.energy}%"></div></div><span class="stat-val">${a.energy}</span></div><div class="stat-row"><span class="stat-label">Bond</span><div class="stat-bar"><div class="stat-fill fill-bond" style="width:${a.bond}%"></div></div><span class="stat-val">${a.bond}</span></div></div></div><div class="card"><div class="section-title" style="margin-bottom:8px">Ежедневные ритуалы</div><div class="ritual-track"><div class="ritual-item ${r.feed?'done':''}"><div class="ri-icon">🍃</div><div class="ri-label">${r.feed?'✓ ':''}Накормить</div></div><div class="ritual-item ${r.talk?'done':''}"><div class="ri-icon">💬</div><div class="ri-label">${r.talk?'✓ ':''}Поговорить</div></div><div class="ritual-item ${r.reflect?'done':''}"><div class="ri-icon">✨</div><div class="ri-label">${r.reflect?'✓ ':''}Рефлексия</div></div></div></div><div class="card"><div class="section-title" style="margin-bottom:8px">Забота</div><div class="care-grid"><div class="care-btn" onclick="care('feed')">🍃<span>Накормить</span></div><div class="care-btn" onclick="care('play')">⚡<span>Играть</span></div><div class="care-btn" onclick="care('sleep')">🌙<span>Сон</span></div><div class="care-btn" onclick="care('wake')">☀️<span>Пробудить</span></div></div></div><div id="care-msg" style="font-size:13px;color:#00D2FF;text-align:center;min-height:20px"></div>`;}
 
-async function createGodProfile() {
-  const name = document.getElementById('god-name-input').value.trim();
-  if (!selectedArch_setup) return toast('Choose an archetype first');
-  if (!name) return toast('Enter your God name');
-  try {
-    const p = await api('/api/god/profile', 'POST', { archetype: selectedArch_setup, name });
-    localStorage.setItem('oasis_god_id', p.godId);
-    godId = p.godId;
-    setGodUI(p);
-    showScreen('screen-sanctuary');
-    loadAgents();
-  } catch(e) { toast('Error: ' + e.message); }
-}
+async function care(action){if(!currentAgent)return;try{const r=await fetch(`${API}/api/agents/${currentAgent.id}/care`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})});const d=await r.json();currentAgent=d.agent;renderCare();const m=document.getElementById('care-msg');if(m)m.textContent=d.message||'';updateStatsTab();}catch(e){}}
 
-function setGodUI(p) {
-  const m = ARCH_META[p.archetype] || { icon:'✦', color:'#a78bfa' };
-  document.getElementById('sanctuary-god-avatar').textContent = m.icon;
-  document.getElementById('sanctuary-god-avatar').style.background = `linear-gradient(135deg,${m.color},${m.color}88)`;
-  document.getElementById('sanctuary-god-name').textContent = p.name;
-  document.getElementById('sanctuary-god-arch').textContent = p.archetype;
-}
+function connectWS(){if(!currentAgent)return;if(ws){try{ws.close();}catch(e){}}try{const proto=location.protocol==='https:'?'wss:':'ws:';ws=new WebSocket(`${proto}//${location.host}`);ws.onopen=()=>{ws.send(JSON.stringify({type:'join',agentId:currentAgent.id}));wsConnected=true;document.getElementById('ws-status').textContent='● Live — WebSocket';document.getElementById('ws-status').className='ws-indicator live';};ws.onmessage=(e)=>{const msg=JSON.parse(e.data);if(msg.type==='message')appendChat('agent',msg.text,msg.emotion,msg.mood,msg.moodEmoji);};ws.onclose=()=>{wsConnected=false;document.getElementById('ws-status').textContent='● HTTP режим';document.getElementById('ws-status').className='ws-indicator';};}catch(e){wsConnected=false;}}
 
-// ── Agents ────────────────────────────────────────────────────────────────────
-async function loadAgents() {
-  const list = document.getElementById('agents-list');
-  list.innerHTML = '<div class="loader"><div class="spinner"></div>Loading souls…</div>';
-  try {
-    const agents = await api(`/api/agents?godId=${godId}`);
-    if (!agents.length) {
-      list.innerHTML = `<div class="empty-state">
-        <div class="icon">🌱</div>
-        <p>Your sanctuary is empty.<br/>Summon your first soul to begin.</p>
-        <div style="height:16px"></div>
-        <button class="btn" onclick="showScreen('screen-create')">+ Summon Agent</button>
-      </div>`;
-      return;
-    }
-    list.innerHTML = agents.map(renderAgentCard).join('');
-  } catch(e) { list.innerHTML = `<div class="empty-state"><p>Error loading agents</p></div>`; }
-}
+async function loadDailyQuestion(){if(!currentAgent)return;try{const r=await fetch(`${API}/api/agents/${currentAgent.id}/daily-question`);const d=await r.json();const el=document.getElementById('daily-question-card');el.style.display='block';el.innerHTML=`<div class="dq-from">${d.emoji} ${d.from} спрашивает:</div><div class="dq-text">«${d.question}»</div>`;}catch(e){}}
 
-function renderAgentCard(a) {
-  const m = ARCH_META[a.archetype] || { icon:'✦', color:'#a78bfa' };
-  return `<div class="agent-card" onclick="openAgent('${a.id}')">
-    <div class="agent-top">
-      <div class="agent-avatar" style="background:${m.color}22;color:${m.color}">${m.icon}</div>
-      <div class="agent-meta">
-        <div class="name">${a.name}</div>
-        <div class="arch">${a.archetype} · Gen ${a.generation} · Lv ${a.level}</div>
-      </div>
-    </div>
-    <div class="agent-stats">
-      <div class="stat"><div class="val">${a.energy}%</div><div class="lbl">Energy</div></div>
-      <div class="stat"><div class="val">${a.level}</div><div class="lbl">Level</div></div>
-      <div class="stat"><div class="val" style="font-size:11px;text-transform:capitalize">${a.lifecycleState}</div><div class="lbl">State</div></div>
-    </div>
-    <div class="energy-bar"><div class="energy-fill" style="width:${a.energy}%"></div></div>
-    <div class="mood-chip">✨ ${a.mood}</div>
-    ${a.lastMessage ? `<div class="last-msg">"${a.lastMessage}"</div>` : ''}
-  </div>`;
-}
+function appendChat(role,text,emotion,mood,moodEmoji){const c=document.getElementById('chat-messages');const div=document.createElement('div');div.className=`msg msg-${role}`;const ei=EMO_MAP[emotion]||'';const mt=role==='agent'&&moodEmoji?`<div class="msg-emotion">${moodEmoji} ${mood||''} ${ei?'· '+ei:''}</div>`:(ei?`<div class="msg-emotion">${ei}</div>`:'');div.innerHTML=`${text}${mt}`;c.appendChild(div);c.scrollTop=c.scrollHeight;}
+function showTyping(){const c=document.getElementById('chat-messages');const d=document.createElement('div');d.id='typing-indicator';d.className='typing';d.innerHTML='<div class="dot"></div><div class="dot"></div><div class="dot"></div>';c.appendChild(d);c.scrollTop=c.scrollHeight;}
+function removeTyping(){document.getElementById('typing-indicator')?.remove();}
 
-function openAgent(id) {
-  currentAgentId = id;
-  showScreen('screen-agent');
-}
+async function sendChat(){const input=document.getElementById('chat-input');const msg=input.value.trim();if(!msg||!currentAgent)return;input.value='';appendChat('user',msg,'','','');if(wsConnected&&ws?.readyState===1){ws.send(JSON.stringify({type:'chat',message:msg}));showTyping();setTimeout(removeTyping,3000);return;}showTyping();try{const r=await fetch(`${API}/api/agents/${currentAgent.id}/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});const d=await r.json();removeTyping();appendChat('agent',d.response,d.userEmotion,d.agent?.mood,MOODS_EMOJI[d.agent?.mood]);if(d.agent){currentAgent.mood=d.agent.mood;currentAgent.bond=d.agent.bond;currentAgent.energy=d.agent.energy;currentAgent.karma=d.agent.karma;currentAgent.streak=d.agent.streak;}if(d.ritualsDone)appendChat('agent','🌟 Все 3 ритуала выполнены! Карма +25.','inspired','inspired','✨');}catch(e){removeTyping();}}
 
-async function loadAgentDetail(id) {
-  const body = document.getElementById('agent-detail-body');
-  body.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
-  try {
-    const a = await api(`/api/agents/${id}`);
-    const m = ARCH_META[a.archetype] || { icon:'✦', color:'#a78bfa' };
-    document.getElementById('agent-detail-name').textContent = a.name;
-    document.getElementById('agent-detail-arch').textContent = `${a.archetype} · Gen ${a.generation}`;
+async function loadEmotions(){if(!currentAgent)return;try{const r=await fetch(`${API}/api/agents/${currentAgent.id}/emotions`);const d=await r.json();renderEmotionMap(d.emotionHistory||[],d.karma);}catch(e){}}
+function renderEmotionMap(history,karma){const el=document.getElementById('emo-map');if(!el)return;el.innerHTML=history.length===0?'<span style="color:var(--muted);font-size:13px">Нет данных</span>':history.slice(-30).map(e=>`<div class="emo-dot ${EMO_CLASS[e.emotion]||'emo-neutral'}" title="${e.emotion}">${EMO_MAP[e.emotion]||'⚪'}</div>`).join('');const kEl=document.getElementById('karma-display');if(kEl){const k=karma||0;kEl.className='karma-val '+(k>0?'karma-pos':k<0?'karma-neg':'karma-neutral');kEl.textContent=(k>=0?'+':'')+k+' карма';}}
+async function loadMemory(){if(!currentAgent)return;try{const r=await fetch(`${API}/api/agents/${currentAgent.id}/memory`);const d=await r.json();const el=document.getElementById('memory-log');if(!el)return;const last=(d.memory||[]).slice(-10);if(!last.length){el.innerHTML='<div style="color:var(--muted);font-size:13px">Память пуста</div>';return;}el.innerHTML=last.reverse().map(m=>{const t=new Date(m.ts).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});const rc=`mem-role-${m.role}`;const rl=m.role==='user'?'Ты':m.role==='reflection'?'✨ Рефлексия':'Агент';return `<div class="mem-entry"><span class="${rc}">${rl}</span>: <span class="mem-text">${m.text}</span><div class="mem-time">${t}${m.emotion&&m.emotion!=='neutral'?' · '+m.emotion:''}</div></div>`;}).join('');}catch(e){}}
+async function updateStatsTab(){await loadEmotions();await loadMemory();}
+async function submitReflect(){if(!currentAgent)return;const input=document.getElementById('reflect-input');const text=input.value.trim();try{const r=await fetch(`${API}/api/agents/${currentAgent.id}/ritual/reflect`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reflection:text})});const d=await r.json();if(d.error){alert(d.error);return;}input.value='';const form=document.getElementById('reflect-form');form.innerHTML=`<div style="text-align:center;padding:12px;color:#00D2FF">${d.message}</div>`;if(d.agentResponse)form.innerHTML+=`<div class="dq-card" style="margin-top:8px">${d.agentResponse}</div>`;if(currentAgent)currentAgent.rituals={...(currentAgent.rituals||{}),reflect:true};renderCare();updateStatsTab();}catch(e){}}
 
-    const traitsHtml = Object.entries(a.traits).map(([k,v]) =>
-      `<div class="trait-row">
-        <div class="trait-name">${k}</div>
-        <div class="trait-bar"><div class="trait-fill" style="width:${Math.round(v*100)}%;background:${m.color}"></div></div>
-        <div style="font-size:11px;color:var(--muted);width:28px;text-align:right">${Math.round(v*100)}</div>
-      </div>`
-    ).join('');
+function buildArchGrid(){const grid=document.getElementById('arch-grid');if(!grid)return;grid.innerHTML=Object.entries(ARCHETYPES).map(([k,v])=>`<div class="arch-btn ${k===newArchetype?'selected':''}" onclick="selectArch('${k}')" style="border-color:${k===newArchetype?v.color:'#1e1e32'}">${v.emoji} ${v.name}</div>`).join('');}
+function selectArch(key){newArchetype=key;buildArchGrid();}
+async function createAgent(){const name=document.getElementById('new-agent-name').value.trim();try{const r=await fetch(`${API}/api/agents`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({archetype:newArchetype,name:name||undefined})});const agent=await r.json();if(agent.error){alert(agent.error);return;}document.getElementById('new-agent-name').value='';await loadAgents();selectAgent(agent);}catch(e){}}
+function renderCrossbreed(){const sec=document.getElementById('crossbreed-section');if(!sec)return;if(agents.length<2){sec.style.display='none';return;}sec.style.display='block';const sel=document.getElementById('crossbreed-selects');const opts=agents.map(a=>`<option value="${a.id}">${ARCHETYPES[a.archetype]?.emoji} ${a.name} Lv.${a.level}</option>`).join('');sel.innerHTML=`<div style="display:flex;gap:8px"><select id="cb-a1" style="flex:1;background:var(--bg3);border:1px solid #1e1e32;border-radius:10px;padding:8px;color:var(--text)">${opts}</select><select id="cb-a2" style="flex:1;background:var(--bg3);border:1px solid #1e1e32;border-radius:10px;padding:8px;color:var(--text)">${opts}</select></div>`;const opts2=sel.querySelectorAll('select');if(opts2[1]&&agents.length>1)opts2[1].value=agents[1].id;}
+async function doCrossbreed(){const a1=document.getElementById('cb-a1')?.value;const a2=document.getElementById('cb-a2')?.value;if(!a1||!a2||a1===a2){alert('Выбери двух разных агентов');return;}try{const r=await fetch(`${API}/api/agents/crossbreed`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent1:a1,agent2:a2})});const child=await r.json();if(child.error){alert(child.error);return;}await loadAgents();selectAgent(child);}catch(e){}}
 
-    body.innerHTML = `
-      <div class="agent-hero">
-        <div class="avatar" style="background:${m.color}22;color:${m.color}">${m.icon}</div>
-        <div class="name">${a.name}</div>
-        <div class="arch">${a.archetype}</div>
-        <div class="gen">Generation ${a.generation} · Level ${a.level}</div>
-      </div>
-      <div class="status-row">
-        <div class="status-pill"><div class="val">${a.energy}%</div><div class="lbl">Energy</div></div>
-        <div class="status-pill"><div class="val" style="font-size:16px;text-transform:capitalize">${a.mood}</div><div class="lbl">Mood</div></div>
-        <div class="status-pill"><div class="val" style="font-size:13px;text-transform:capitalize">${a.lifecycleState}</div><div class="lbl">State</div></div>
-      </div>
-      ${a.lastMessage ? `<div class="card"><h2>Last Words</h2><div style="font-style:italic;font-size:13px;color:var(--muted);line-height:1.6">"${a.lastMessage}"</div></div>` : ''}
-      <div class="care-grid">
-        <div class="care-btn" onclick="care('${a.id}','feed')"><div class="ci">🍎</div><div class="ct">Feed</div><div class="cd">+25 energy</div></div>
-        <div class="care-btn" onclick="care('${a.id}','talk')"><div class="ci">💬</div><div class="ct">Talk</div><div class="cd">+10 energy</div></div>
-        <div class="care-btn" onclick="care('${a.id}','play')"><div class="ci">🎮</div><div class="ct">Play</div><div class="cd">-5 energy</div></div>
-        ${a.lifecycleState === 'dormant'
-          ? `<div class="care-btn" onclick="care('${a.id}','wake')"><div class="ci">☀️</div><div class="ct">Wake</div><div class="cd">activate</div></div>`
-          : `<div class="care-btn" onclick="care('${a.id}','sleep')"><div class="ci">🌙</div><div class="ct">Sleep</div><div class="cd">+40 energy</div></div>`
-        }
-      </div>
-      <div class="card"><h2>Soul Traits</h2><div class="traits-grid">${traitsHtml}</div></div>
-      <div style="padding:0 16px;margin-bottom:12px">
-        <button class="btn danger sm" onclick="deleteAgent('${a.id}')">Release Soul</button>
-      </div>
-      <div style="height:32px"></div>
-    `;
-  } catch(e) { body.innerHTML = `<div class="empty-state"><p>Error loading agent</p></div>`; }
-}
-
-async function createAgent() {
-  if (!selectedArch_create) return toast('Choose an archetype');
-  const name = document.getElementById('agent-name-input').value.trim();
-  try {
-    await api('/api/agents', 'POST', { archetype: selectedArch_create, name: name || undefined, godId });
-    document.getElementById('agent-name-input').value = '';
-    selectedArch_create = null;
-    document.querySelectorAll('[id^="create-arch-"]').forEach(el => el.classList.remove('selected'));
-    toast('Soul summoned ✨');
-    showScreen('screen-sanctuary');
-  } catch(e) { toast('Error: ' + e.message); }
-}
-
-async function care(agentId, action) {
-  try {
-    const r = await api(`/api/agents/${agentId}/care`, 'POST', { action });
-    toast(`${action}: ${r.label}`);
-    loadAgentDetail(agentId);
-  } catch(e) { toast('Error: ' + e.message); }
-}
-
-async function deleteAgent(id) {
-  if (!confirm('Release this soul forever?')) return;
-  await api(`/api/agents/${id}`, 'DELETE');
-  toast('Soul released');
-  showScreen('screen-sanctuary');
-}
-
-// ── Utils ─────────────────────────────────────────────────────────────────────
-async function api(path, method='GET', body=null) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(API + path, opts);
-  const data = await r.json();
-  if (!r.ok) throw new Error(data.error || 'Request failed');
-  return data;
-}
-
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2800);
-}
+function switchTab(name){document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));document.getElementById(`tab-${name}`).classList.add('active');document.querySelector(`[data-tab="${name}"]`).classList.add('active');if(name==='stats')updateStatsTab();if(name==='chat'&&currentAgent)loadDailyQuestion();}
 
 init();
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 </script>
 </body>
 </html>
