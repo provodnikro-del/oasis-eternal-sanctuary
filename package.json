@@ -1,10 +1,10 @@
 {
   "name": "oasis-eternal-sanctuary",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "GodLocal × AI tamagotchi-civilization engine",
   "scripts": {
-    "start": "ts-node --skip-project --compiler-options '{\"module\":\"commonjs\",\"strict\":false}' packages/server/index.ts",
+    "start": "ts-node --skipProject --compiler-options '{\"module\":\"commonjs\",\"strict\":false}' packages/server/index.ts",
     "dev": "npm start",
     "test": "jest --passWithNoTests",
     "typecheck": "tsc --noEmit"
