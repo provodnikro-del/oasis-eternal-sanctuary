@@ -21,6 +21,12 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemi
 
 // ─── Composio / Autonomous Agent ───────────────────────────────────────────
 const COMPOSIO_KEY         = process.env.COMPOSIO_API_KEY || '';
+const { Composio }         = require('composio-core');
+let   _composio            = null;
+function getComposio() {
+  if (!_composio && COMPOSIO_KEY) _composio = new Composio({ apiKey: COMPOSIO_KEY });
+  return _composio;
+}
 const TWITTER_ACCOUNT_ID   = process.env.TWITTER_ACCOUNT_ID   || 'ca_iR0euwwdBDaO';
 const TELEGRAM_ACCOUNT_ID  = process.env.TELEGRAM_ACCOUNT_ID  || 'ca_vTb06KLzoS7T';
 const INSTAGRAM_ACCOUNT_ID = process.env.INSTAGRAM_ACCOUNT_ID || 'ca_C9kqBGUUktGi';
@@ -226,39 +232,19 @@ async function callGemini(prompt) {
   } catch(e) { return null; }
 }
 
-// ─── Composio REST helper ────────────────────────────────────────────────────
+// ─── Composio SDK helper ─────────────────────────────────────────────────────
 async function composioAction(actionSlug, connectedAccountId, input) {
   if (!COMPOSIO_KEY) return { ok: false, error: 'COMPOSIO_API_KEY not set' };
-  return new Promise((resolve) => {
-    const body = JSON.stringify({ actionName: actionSlug, connectedAccountId, input });
-    const https = require('https');
-    const options = {
-      hostname: 'backend.composio.dev',
-      path: '/api/v2/actions/execute',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': COMPOSIO_KEY,
-        'Content-Length': Buffer.byteLength(body),
-      },
-    };
-    const req = https.request(options, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        try {
-          const parsed = JSON.parse(data);
-          // v2 returns { data: { ... } } on success, or { error } on fail
-          if (parsed.error) { resolve({ ok: false, error: parsed.error }); return; }
-          resolve({ ok: true, data: parsed.data ?? parsed });
-        } catch { resolve({ ok: false, error: data }); }
-      });
+  try {
+    const composio = getComposio();
+    const result   = await composio.actions.execute({
+      actionName:  actionSlug,
+      requestBody: { connectedAccountId, input },
     });
-    req.on('error', (e) => resolve({ ok: false, error: e.message }));
-    req.setTimeout(15000, () => { req.destroy(); resolve({ ok: false, error: 'timeout' }); });
-    req.write(body);
-    req.end();
-  });
+    return { ok: true, data: result };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
+  }
 }
 
 // ─── Agent tools ─────────────────────────────────────────────────────────────
@@ -344,7 +330,7 @@ function send(res, status, data) {
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
 route('GET', '/health', (req, res) => send(res, 200, {
-  status: 'ok', version: '0.6.0',
+  status: 'ok', version: '0.7.0',
   groq: !!GROQ_KEY, gemini: !!GEMINI_KEY, composio: !!COMPOSIO_KEY,
   tools: Object.keys(AGENT_TOOLS).filter(t => t !== 'none'),
 }));
