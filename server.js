@@ -587,7 +587,7 @@ async function loadState() {
     const r = await fetch('/api/agents');
     const d = await r.json();
     allAgents = {};
-    (d.agents||[]).forEach(a => { allAgents[a.id] = a; });
+    (Array.isArray(d) ? d : (d.agents||[])).forEach(a => { allAgents[a.id] = a; });
     renderAgents();
   } catch(e) {}
 }
@@ -719,7 +719,7 @@ route('GET', '/', (req, res) => {
 });
 
 route('GET', '/health', (req, res) => send(res, 200, {
-  status: 'ok', version: '0.8.1',
+  status: 'ok', version: '0.8.2',
   groq: !!GROQ_KEY, gemini: !!GEMINI_KEY, composio: !!COMPOSIO_KEY,
   tools: Object.keys(AGENT_TOOLS).filter(t => t !== 'none'),
 }));
