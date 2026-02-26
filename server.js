@@ -826,7 +826,7 @@ async function addScheduleTask() {
   const content  = document.getElementById('sched-content').value.trim();
   if (!platform) return;
   const body = { platform, daily };
-  if (content) body.queue = content.split('\n---\n').map(x=>x.trim()).filter(Boolean);
+  if (content) body.queue = content.split('---').map(x=>x.trim()).filter(Boolean);
   await fetch('/api/schedule', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
   document.getElementById('sched-content').value = '';
   loadSchedule();
@@ -840,7 +840,7 @@ async function runScheduleNow() {
 }
 
 async function sendCodeTask() {
-  const agentId = currentAgent;
+  const agentId = currentAgentId;
   if (!agentId) return;
   const task = document.getElementById('code-task').value.trim();
   if (!task) return;
@@ -866,7 +866,7 @@ route('GET', '/', (req, res) => {
 });
 
 route('GET', '/health', (req, res) => send(res, 200, {
-  status: 'ok', version: '1.0.0',
+  status: 'ok', version: '1.0.1',
   groq: !!GROQ_KEY, gemini: !!GEMINI_KEY, composio: !!COMPOSIO_KEY,
   tools: Object.keys(AGENT_TOOLS).filter(t => t !== 'none'),
 }));
