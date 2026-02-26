@@ -335,7 +335,7 @@ function send(res, status, data) {
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
 route('GET', '/health', (req, res) => send(res, 200, {
-  status: 'ok', version: '0.7.0',
+  status: 'ok', version: '0.7.2',
   groq: !!GROQ_KEY, gemini: !!GEMINI_KEY, composio: !!COMPOSIO_KEY,
   tools: Object.keys(AGENT_TOOLS).filter(t => t !== 'none'),
 }));
