@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.env
+.env.local
+!.env.example
+data/
+*.db
+chroma_data/
+*.log
+logs/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+coverage/
+tsconfig.tsbuildinfo
