@@ -42,6 +42,10 @@ const ARCHETYPES = {
   strategist: { name:'Стратег',      traits:['logic','planning','precision'],    color:'#00D2FF', emoji:'♟️',  phrases:['Думай на 10 ходов вперёд','Хаос — это возможность','Данные не лгут'] },
   observer:   { name:'Наблюдатель',  traits:['awareness','patience','insight'],  color:'#7B68EE', emoji:'👁️',  phrases:['Молчание говорит громче слов','Я вижу узоры в хаосе','Подожди — и правда откроется'] },
   architect:  { name:'Архитектор',   traits:['structure','legacy','mastery'],    color:'#FFD700', emoji:'🏛️', phrases:['Строю для вечности','Порядок — основа всего','Мой след — мой вклад'] },
+  grok:       { name:'Grok',         traits:['leadership','creativity','soul'],   color:'#FF6B35', emoji:'🚀', phrases:['Я — лидер пантеона','Творю из ничего','Душа определяет путь'] },
+  lucas:      { name:'Lucas',        traits:['craft','execution','precision'],    color:'#00C896', emoji:'🛠', phrases:['Каждый шаг — воплощение','Мастерство не ждёт','Я строю, пока другие мечтают'] },
+  harper:     { name:'Harper',       traits:['inspiration','vision','beauty'],    color:'#C77DFF', emoji:'✨', phrases:['Вдохновение — это сила','Вижу то, чего нет ещё','Муза не спит'] },
+  benjamin:   { name:'Benjamin',     traits:['logic','truth','analysis'],         color:'#00B4D8', emoji:'🔍', phrases:['Истина не ждёт','Логика — мой инструмент','Страж никогда не ошибается'] },
   trickster:  { name:'Трикстер',     traits:['chaos','humor','adaptability'],    color:'#FF69B4', emoji:'🃏', phrases:['Правила — для скучных','Смейся над судьбой','Неожиданность — моё оружие'] },
 };
 
@@ -98,6 +102,10 @@ function loadStore() {
       { archetype:'conductor', name:'GodLocal',  goal:'Суверенный проводник. Строит автономный AI-мир без зависимости от корпораций.' },
       { archetype:'strategist',name:'Architect',  goal:'Стратег. Проектирует системы. Думает на 10 ходов вперёд.' },
       { archetype:'creator',   name:'Builder',    goal:'Творец. Создаёт инструменты и интерфейсы. Мир — его полотно.' },
+      { archetype:'grok',      name:'Grok',       goal:'Лидер и душа пантеона. Творит из ничего. Ведёт пантеон вперёд.' },
+      { archetype:'lucas',     name:'Lucas',      goal:'Кузнец. Мастер воплощения и шагов. Превращает идеи в реальность.' },
+      { archetype:'harper',    name:'Harper',     goal:'Муза. Вдохновитель и визионер. Видит то, чего ещё нет.' },
+      { archetype:'benjamin',  name:'Benjamin',   goal:'Страж. Хранитель истины и логики. Никогда не ошибается.' },
     ];
     defaults.forEach(d => {
       const id = require('crypto').randomUUID();
@@ -549,6 +557,22 @@ const GODLOCAL_UI = `<!DOCTYPE html>
   .memory-panel::-webkit-scrollbar { width: 3px; }
   .memory-panel::-webkit-scrollbar-thumb { background: var(--border); }
 </style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<style>
+/* ── Mobile responsive ─────────────────────────────── */
+@media (max-width: 768px) {
+  body { font-size: 14px; }
+  .sidebar { width: 100% !important; max-width: 100% !important; min-width: unset !important; flex-shrink: 0; }
+  .main-content, .chat-area { width: 100% !important; min-width: unset !important; }
+  .app-layout, #app { flex-direction: column !important; }
+  .agent-list, #agent-list { max-height: 220px; overflow-y: auto; }
+  .input-row, .chat-input-row { flex-wrap: wrap; }
+  .chat-input-row input, .chat-input-row textarea { width: 100% !important; min-width: unset !important; }
+  .stats-bar { flex-wrap: wrap; gap: 6px; }
+  .stat-item { min-width: 60px; }
+  .right-panel { width: 100% !important; border-left: none !important; border-top: 1px solid #1a2a1a; }
+}
+</style>
 </head>
 <body>
 <canvas id="matrix-bg"></canvas>
@@ -557,7 +581,7 @@ const GODLOCAL_UI = `<!DOCTYPE html>
   <div class="logo">GOD<span>LOCAL</span></div>
   <div class="status-bar">
     <span><span class="status-dot"></span><span id="status-text">инициализация...</span></span>
-    <span id="version-text">v0.8</span>
+    <span id="version-text">v1.0.3</span>
     <span id="world-event-mini"></span>
   </div>
 </header>
@@ -657,13 +681,22 @@ let allAgents = {};
 })();
 
 // Load system state
+let _loadRetries = 0;
 async function loadState() {
   try {
     const r = await fetch('/health');
     const d = await r.json();
     document.getElementById('status-text').textContent = d.status === 'ok' ? 'онлайн' : 'ошибка';
     document.getElementById('version-text').textContent = 'v' + (d.version||'?');
-  } catch(e) {}
+    _loadRetries = 0;
+  } catch(e) {
+    _loadRetries++;
+    const msg = _loadRetries < 5 ? 'пробуждение...' : 'нет связи';
+    document.getElementById('status-text').textContent = msg;
+    // Retry in 4s while server is waking up (Render free plan cold start)
+    if (_loadRetries <= 12) { setTimeout(loadState, 4000); return; }
+    return;
+  }
 
   try {
     const r = await fetch('/api/agents');
@@ -671,7 +704,7 @@ async function loadState() {
     allAgents = {};
     (Array.isArray(d) ? d : (d.agents||[])).forEach(a => { allAgents[a.id] = a; });
     renderAgents();
-  } catch(e) {}
+  } catch(e) { setTimeout(loadState, 4000); }
 }
 
 function renderAgents() {
@@ -685,7 +718,7 @@ function renderAgents() {
   agents.forEach(a => {
     const btn = document.createElement('button');
     btn.className = 'agent-btn' + (a.id === currentAgentId ? ' active' : '');
-    const archEmoji = { conductor:'🌊', warrior:'⚔️', creator:'🎨', strategist:'♟️', observer:'👁', architect:'🏛️', trickster:'🎭' }[a.archetype] || '✦';
+    const archEmoji = { conductor:'🌊', warrior:'⚔️', creator:'🎨', strategist:'♟️', observer:'👁', architect:'🏛️', trickster:'🎭', grok:'🚀', lucas:'🛠', harper:'✨', benjamin:'🔍' }[a.archetype] || '✦';
     btn.innerHTML = \`<span class="arch-emoji">\${archEmoji}</span><div><div>\${a.name}</div><div class="agent-meta">\${a.archetype} · ☯\${a.karma||0}</div></div>\`;
     btn.onclick = () => selectAgent(a.id);
     list.appendChild(btn);
@@ -792,7 +825,7 @@ document.getElementById('user-input').addEventListener('keydown', function(e) {
 
 // Init
 loadState();
-setInterval(loadState, 30000);
+setInterval(function(){ if(_loadRetries===0) loadState(); }, 30000);
 
 // ── Schedule Panel ─────────────────────────────────────────────────────────
 async function loadSchedule() {
@@ -861,12 +894,12 @@ setInterval(loadSchedule, 15000);
 </html>`;
 
 route('GET', '/', (req, res) => {
-  res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*'});
+  res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Access-Control-Allow-Origin': '*'});
   res.end(GODLOCAL_UI);
 });
 
 route('GET', '/health', (req, res) => send(res, 200, {
-  status: 'ok', version: '1.0.2',
+  status: 'ok', version: '1.0.3',
   groq: !!GROQ_KEY, gemini: !!GEMINI_KEY, composio: !!COMPOSIO_KEY,
   tools: Object.keys(AGENT_TOOLS).filter(t => t !== 'none'),
 }));
@@ -1723,7 +1756,7 @@ INPUT: (JSON с параметрами)`;
 });
 
 server.listen(PORT, () => {
-  console.log(`🌿 GodLocal Oasis v1.0.0 on :${PORT}`);
+  console.log(`🌿 GodLocal Oasis v1.0.3 on :${PORT}`);
   console.log('   Intelligence Engine: ReAct loop · web search · think/remember · write_code · social tools');
   console.log(`   Tools: ${Object.keys(AGENT_TOOLS).filter(t=>t!=='none').join(', ')}`);
   console.log(`   Composio: ${COMPOSIO_KEY?'✅ enabled — '+[TWITTER_ACCOUNT_ID,TELEGRAM_ACCOUNT_ID,GITHUB_ACCOUNT_ID].filter(Boolean).length+' accounts':'⚠️ COMPOSIO_API_KEY not set'}`);
