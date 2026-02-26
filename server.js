@@ -4,6 +4,7 @@
  * Sprint 1: Memory · Emotions · Moods · Streaks · Karma · World Events · WebSocket · Daily Rituals · Groq Chat · Compat API · Emotion Map
  * Sprint 2: Autonomous Agent — ReAct /agent/act · Tick /agent/tick · Composio tools (Twitter, Telegram, Instagram)
  */
+const https = require('https');
 const http = require('http');
 const fs   = require('fs');
 const path = require('path');
@@ -721,7 +722,7 @@ route('GET', '/', (req, res) => {
 });
 
 route('GET', '/health', (req, res) => send(res, 200, {
-  status: 'ok', version: '0.9.4',
+  status: 'ok', version: '0.9.5',
   groq: !!GROQ_KEY, gemini: !!GEMINI_KEY, composio: !!COMPOSIO_KEY,
   tools: Object.keys(AGENT_TOOLS).filter(t => t !== 'none'),
 }));
@@ -785,7 +786,6 @@ route('POST', '/api/agents/:id/care', async (req,res,p) => {
 
 // ─── Web Search (DuckDuckGo, no API key needed) ─────────────────────────────
 async function webSearch(query) {
-  const mod = require('https');
   function httpsGet(options) {
     return new Promise((resolve) => {
       let data = '';
@@ -801,27 +801,25 @@ async function webSearch(query) {
 
   const q = query.toLowerCase();
 
-  // ── Crypto prices → CoinGecko ────────────────────────────────────────────
-  const cryptoMap = { bitcoin:'bitcoin',btc:'bitcoin',биткоин:'bitcoin',биткойн:'bitcoin',
-    ethereum:'ethereum',eth:'ethereum',эфир:'ethereum',эфириум:'ethereum',
-    solana:'solana',sol:'solana',солана:'solana',bnb:'binancecoin',sui:'sui' };
-  const foundCoin = Object.entries(cryptoMap).find(([k]) => q.includes(k));
-  if (foundCoin) {
-    const raw = await httpsGet({ hostname:'api.coingecko.com',
-      path:`/api/v3/simple/price?ids=${foundCoin[1]},bitcoin,ethereum,solana&vs_currencies=usd,rub`,
+  // ── Crypto prices → GodLocal Market API (CoinGecko proxy with cache) ──────
+  const cryptoKeywords = /bitcoin|btc|биткоин|биткойн|ethereum|eth|эфир|эфириум|solana|sol|солана|bnb|sui|крипт|цена|price|стоимость/i;
+  if (cryptoKeywords.test(query)) {
+    const raw = await httpsGet({ hostname:'godlocal.vercel.app', path:'/market',
       headers:{'User-Agent':'GodLocal/0.9'} });
     try {
       const j = JSON.parse(raw);
-      const knownCoins = ['bitcoin','ethereum','solana','binancecoin','sui'];
-      const lines = Object.entries(j)
-        .filter(([coin, vals]) => knownCoins.includes(coin) && vals && typeof vals.usd === 'number')
-        .map(([coin, vals]) => {
-          const price = Math.round(vals.usd).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-          const label = {bitcoin:'BTC',ethereum:'ETH',solana:'SOL',binancecoin:'BNB',sui:'SUI'}[coin] || coin.toUpperCase();
-          return `${label}: $${price} USD`;
-        });
-      if (!lines.length) return 'CoinGecko вернул пустой ответ (возможно, rate limit). Проверь цену на coingecko.com';
-      return '📊 Актуальные цены (CoinGecko):\n' + lines.join('\n');
+      if (j.market) return '📊 Рынок крипто:\n' + j.market;
+    } catch(e) {}
+    // Fallback direct CoinGecko
+    const cg = await httpsGet({ hostname:'api.coingecko.com',
+      path:'/api/v3/simple/price?ids=bitcoin,ethereum,solana,binancecoin,sui&vs_currencies=usd',
+      headers:{'User-Agent':'GodLocal/0.9'} });
+    try {
+      const j = JSON.parse(cg);
+      const labels = {bitcoin:'BTC',ethereum:'ETH',solana:'SOL',binancecoin:'BNB',sui:'SUI'};
+      const lines = Object.entries(j).filter(([c,v]) => labels[c] && v?.usd)
+        .map(([c,v]) => `${labels[c]}: $${Math.round(v.usd).toString().replace(/\B(?=(\d{3})+(?!\d))/g,',')} USD`);
+      if (lines.length) return '📊 Актуальные цены:\n' + lines.join('\n');
     } catch(e) {}
   }
 
@@ -869,7 +867,7 @@ async function callGroqReAct(messages, tools) {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}`,
         'User-Agent': 'groq-python/0.21.0' },
     };
-    const mod = require('https');
+    const mod = https;
     let data = '';
     const req = mod.request(options, (res) => {
       res.on('data', c => data += c);
