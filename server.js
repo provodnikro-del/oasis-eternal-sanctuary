@@ -13,7 +13,7 @@ let WebSocketServer;
 try { WebSocketServer = require('ws').Server; } catch(e) { WebSocketServer = null; }
 
 const PORT      = process.env.PORT || 3000;
-const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'oasis-data.json');
+const DATA_FILE = process.env.DATA_FILE || '/tmp/oasis-data.json';
 const GROQ_KEY  = process.env.GROQ_API_KEY || '';
 const GROQ_URL  = 'https://api.groq.com/openai/v1/chat/completions';
 const GEMINI_KEY = process.env.GEMINI_API_KEY || '';
