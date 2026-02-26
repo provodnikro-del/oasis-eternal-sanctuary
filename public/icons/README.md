@@ -1,0 +1,1 @@
+Icon PNGs are binary files. Download from the project zip or generate with: npm run gen-icons
