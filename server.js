@@ -1,7 +1,50 @@
 'use strict';
 /**
- * Oasis Eternal Sanctuary — server.js v0.4
- * Sprint 1: Memory · Emotions · Moods · Streaks · Karma · World Events · WebSocket · Daily Rituals · Emotion Map
+ * Oasis Eternal 
+
+const GROQ_KEY = process.env.GROQ_API_KEY || '';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+async function callGroq(prompt) {
+  if (!GROQ_KEY) return null;
+  return new Promise((resolve) => {
+    const body = JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 256,
+      temperature: 0.85,
+    });
+    const urlObj = new URL(GROQ_URL);
+    const options = {
+      hostname: urlObj.hostname,
+      path: urlObj.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_KEY}`,
+        'User-Agent': 'groq-python/0.21.0',
+        'Content-Length': Buffer.byteLength(body),
+      },
+    };
+    const https = require('https');
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => {
+        try {
+          const d = JSON.parse(data);
+          resolve(d?.choices?.[0]?.message?.content?.trim() || null);
+        } catch { resolve(null); }
+      });
+    });
+    req.on('error', () => resolve(null));
+    req.setTimeout(8000, () => { req.destroy(); resolve(null); });
+    req.write(body);
+    req.end();
+  });
+}
+Sanctuary — server.js v0.4
+ * Sprint 1: Memory · Emotions · Moods · Streaks · Karma · World Events · WebSocket · Daily Rituals · Groq Chat · Compat API · Emotion Map
  */
 const http = require('http');
 const fs   = require('fs');
@@ -218,7 +261,7 @@ function send(res, status, data) {
   res.end(body);
 }
 
-route('GET', '/health', (req, res) => send(res, 200, { status:'ok', version:'0.4.0' }));
+route('GET', '/health', (req, res) => send(res, 200, { status:'ok', version:'0.5.0', groq:!!GROQ_KEY, gemini:!!GEMINI_KEY }));
 route('GET', '/api/world-event', (req, res) => { const s=loadStore(); send(res,200,getWorldEvent(s)); });
 
 route('GET', '/api/god-profile', (req, res) => {
@@ -277,7 +320,8 @@ route('POST', '/api/agents/:id/chat', async (req,res,p) => {
   if ((wev?.effect==='bond_boost'||wev?.effect==='silence')&&userMsg.length>100) a.bond=Math.min(100,a.bond+5);
   a.bond=Math.min(100,a.bond+1); a.rituals.talk=true;
   if (wev?.effect==='mutation'&&Math.random()<0.15) { const at=Object.values(ARCHETYPES).flatMap(ar=>ar.traits); const nt=at[Math.floor(Math.random()*at.length)]; if (!a.traits.includes(nt)){a.traits.push(nt);if(a.traits.length>6)a.traits.shift();} }
-  let response=GEMINI_KEY?await callGemini(buildChatPrompt(a,userMsg,wev)):null;
+  let response=GROQ_KEY?await callGroq(buildChatPrompt(a,userMsg,wev)):null;
+  if (!response&&GEMINI_KEY) response=await callGemini(buildChatPrompt(a,userMsg,wev));
   if (!response){const arch=ARCHETYPES[a.archetype]||ARCHETYPES.conductor; const pfx={tired:'...',sad:'(медленно) ',angry:'⚡ ',excited:'✨ ',inspired:'🌟 '}[a.mood]||''; response=pfx+arch.phrases[Math.floor(Math.random()*arch.phrases.length)];}
   addMemory(a,'agent',response,'neutral'); a.xp=(a.xp||0)+5; levelUp(a);
   a.lastInteraction=Date.now(); a.degraded=false; a.mood=calcMood(a); s.agents[p.id]=a; saveStore(s);
@@ -297,7 +341,9 @@ route('POST', '/api/agents/:id/ritual/reflect', async (req,res,p) => {
   a.rituals.reflect=true; a.karma=(a.karma||0)+KARMA_MAP.reflect*(wev?.effect==='karma_boost'?2:1); a.xp=(a.xp||0)+20*(wev?.effect==='xp_boost'?2:1); a.bond=Math.min(100,a.bond+5);
   addMemory(a,'reflection',ref||'Тишина как ответ','inspired'); addEmotion(a,'inspired',0.9);
   const allDone=a.rituals.feed&&a.rituals.talk&&a.rituals.reflect; if (allDone){a.karma+=25;a.bond=Math.min(100,a.bond+10);}
-  let agR=null; if (GEMINI_KEY&&ref){agR=await callGemini(`Ты ${ARCHETYPES[a.archetype]?.name||'Проводник'}. Пользователь: "${ref}". Ответь глубоко в 1–2 предложения.`);}
+  let agR=null; const rPrompt=`Ты ${ARCHETYPES[a.archetype]?.name||'Проводник'}. Пользователь: "${ref}". Ответь глубоко в 1–2 предложения.`;
+  if (GROQ_KEY&&ref){agR=await callGroq(rPrompt);}
+  if (!agR&&GEMINI_KEY&&ref){agR=await callGemini(rPrompt);}
   levelUp(a); a.lastInteraction=Date.now(); a.mood=calcMood(a); s.agents[p.id]=a; saveStore(s);
   send(res,200,{ok:true,allRitualsDone:allDone,bonusKarma:allDone?25:0,agentResponse:agR,message:allDone?'🌟 Все 3 ритуала выполнены! Карма +25.':'Рефлексия принята.'});
 });
@@ -309,6 +355,51 @@ route('POST', '/api/agents/crossbreed', async (req,res) => {
   const dom=a1.level>=a2.level?a1:a2; const arcs=Object.keys(ARCHETYPES); let ca=dom.archetype; if (Math.random()<0.15) ca=arcs[Math.floor(Math.random()*arcs.length)];
   const id=uid(); const child={id,archetype:ca,name:`${a1.name.split(' ')[0]}x${a2.name.split(' ')[0]}`,level:1,xp:0,energy:75,bond:15,happiness:60,karma:0,generation:Math.max(a1.generation||1,a2.generation||1)+1,traits:ct,mood:'calm',memory:[],emotionHistory:[],streak:{current:0,lastDate:null,longest:0},rituals:{date:null,feed:false,talk:false,reflect:false},parents:[a1.id,a2.id],sleeping:false,lastInteraction:Date.now(),createdAt:Date.now()};
   s.agents[id]=child; saveStore(s); send(res,201,child);
+});
+
+
+// OpenAI-compatible proxy endpoint → routes to Groq
+route('POST', '/api/agents/compat', async (req, res) => {
+  const b = await readBody(req);
+  if (!GROQ_KEY) return send(res, 503, { error: 'GROQ_API_KEY not configured' });
+  return new Promise((resolve) => {
+    const body = JSON.stringify({
+      model: b.model || 'llama-3.3-70b-versatile',
+      messages: b.messages || [],
+      max_tokens: b.max_tokens || 512,
+      temperature: b.temperature || 0.85,
+      stream: false,
+    });
+    const https = require('https');
+    const urlObj = new URL(GROQ_URL);
+    const options = {
+      hostname: urlObj.hostname,
+      path: urlObj.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_KEY}`,
+        'User-Agent': 'groq-python/0.21.0',
+        'Content-Length': Buffer.byteLength(body),
+      },
+    };
+    const req2 = https.request(options, (r) => {
+      let data = '';
+      r.on('data', (chunk) => data += chunk);
+      r.on('end', () => {
+        res.writeHead(r.statusCode, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        });
+        res.end(data);
+        resolve();
+      });
+    });
+    req2.on('error', () => { send(res, 502, { error: 'Groq upstream error' }); resolve(); });
+    req2.setTimeout(15000, () => { req2.destroy(); send(res, 504, { error: 'Timeout' }); resolve(); });
+    req2.write(body);
+    req2.end();
+  });
 });
 
 const MIME={'.html':'text/html','.css':'text/css','.js':'application/javascript','.json':'application/json','.png':'image/png','.ico':'image/x-icon','.webmanifest':'application/manifest+json'};
@@ -333,7 +424,8 @@ if(WebSocketServer){
         if(msg.type==='chat'&&agentId){
           const s=loadStore();let a=s.agents?.[agentId];if(!a)return ws.send(JSON.stringify({type:'error',message:'Agent not found'}));
           const wev=getWorldEvent(s);const uEmo=analyzeSentiment(msg.message);addMemory(a,'user',msg.message,uEmo);a.karma=(a.karma||0)+KARMA_MAP.talk;
-          let resp=GEMINI_KEY?await callGemini(buildChatPrompt(a,msg.message,wev)):null;
+          let resp=GROQ_KEY?await callGroq(buildChatPrompt(a,msg.message,wev)):null;
+          if(!resp&&GEMINI_KEY)resp=await callGemini(buildChatPrompt(a,msg.message,wev));
           if(!resp){const arch=ARCHETYPES[a.archetype]||ARCHETYPES.conductor;resp=arch.phrases[Math.floor(Math.random()*arch.phrases.length)];}
           addMemory(a,'agent',resp,'neutral');a.bond=Math.min(100,a.bond+1);a.lastInteraction=Date.now();a.mood=calcMood(a);s.agents[agentId]=a;saveStore(s);
           const reply=JSON.stringify({type:'message',role:'agent',text:resp,emotion:uEmo,mood:a.mood,bond:a.bond,moodEmoji:MOODS[a.mood]?.emoji});
@@ -347,6 +439,6 @@ if(WebSocketServer){
 }else{console.log('ℹ️ ws package not installed — WebSocket disabled');}
 
 server.listen(PORT,()=>{
-  console.log(`🌿 Oasis v0.4.0 on :${PORT}`);
-  console.log('   Memory · Emotions · Moods · Streaks · Karma · World Events · WebSocket · Daily Rituals');
+  console.log(`🌿 Oasis v0.5.0 on :${PORT}`);
+  console.log('   Memory · Emotions · Moods · Streaks · Karma · World Events · WebSocket · Daily Rituals · Groq Chat · Compat API');
 });
