@@ -84,9 +84,36 @@ const DAILY_QUESTIONS = [
 const KARMA_MAP = { feed:5, play:8, reflect:15, talk:3, neglect:-10, harsh_word:-8, skip_ritual:-3 };
 
 function loadStore() {
-  try { if (fs.existsSync(DATA_FILE)) return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
+  let store;
+  try { if (fs.existsSync(DATA_FILE)) store = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
   catch(e) {}
-  return { gods:{}, agents:{}, worldEvent:null, worldEventSetAt:0 };
+  if (!store) store = { gods:{}, agents:{}, worldEvent:null, worldEventSetAt:0 };
+
+  // ─── Seed default GodLocal agents if empty ───────────────────────────────
+  if (!store.agents || Object.keys(store.agents).length === 0) {
+    store.agents = {};
+    const defaults = [
+      { archetype:'conductor', name:'GodLocal',  goal:'Суверенный проводник. Строит автономный AI-мир без зависимости от корпораций.' },
+      { archetype:'strategist',name:'Architect',  goal:'Стратег. Проектирует системы. Думает на 10 ходов вперёд.' },
+      { archetype:'creator',   name:'Builder',    goal:'Творец. Создаёт инструменты и интерфейсы. Мир — его полотно.' },
+    ];
+    defaults.forEach(d => {
+      const id = require('crypto').randomUUID();
+      const arch = ARCHETYPES[d.archetype] || ARCHETYPES.conductor;
+      store.agents[id] = {
+        id, archetype: d.archetype, name: d.name, level:1, xp:0,
+        energy:80, bond:20, happiness:60, karma:0, generation:1,
+        traits:[...arch.traits], mood:'calm', memory:[],
+        emotionHistory:[], rituals:{feed:false,talk:false,reflect:false},
+        streak:{current:0,longest:0,lastDate:null},
+        lastInteraction: Date.now(), degraded: false,
+        goal: d.goal, createdAt: Date.now(),
+      };
+    });
+    saveStore(store);
+    console.log('[GodLocal] Seeded 3 default agents');
+  }
+  return store;
 }
 function saveStore(s) { fs.writeFileSync(DATA_FILE, JSON.stringify(s, null, 2)); }
 
@@ -692,7 +719,7 @@ route('GET', '/', (req, res) => {
 });
 
 route('GET', '/health', (req, res) => send(res, 200, {
-  status: 'ok', version: '0.8.0',
+  status: 'ok', version: '0.8.1',
   groq: !!GROQ_KEY, gemini: !!GEMINI_KEY, composio: !!COMPOSIO_KEY,
   tools: Object.keys(AGENT_TOOLS).filter(t => t !== 'none'),
 }));
