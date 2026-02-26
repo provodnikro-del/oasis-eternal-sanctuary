@@ -1,138 +1,397 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="application-name" content="Oasis">
-<link rel="manifest" href="/manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Oasis">
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<link rel="apple-touch-startup-image" href="/icons/splash/splash-1290x2796.png" media="(device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3)">
-<link rel="apple-touch-startup-image" href="/icons/splash/splash-1170x2532.png" media="(device-width:390px) and (device-height:844px) and (-webkit-device-pixel-ratio:3)">
-<link rel="apple-touch-startup-image" href="/icons/splash/splash-1125x2436.png" media="(device-width:375px) and (device-height:812px) and (-webkit-device-pixel-ratio:3)">
-<link rel="apple-touch-startup-image" href="/icons/splash/splash-828x1792.png" media="(device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:2)">
-<meta name="theme-color" content="#0a0015">
-<title>Oasis — Eternal Sanctuary</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>Oasis Eternal Sanctuary</title>
+<link rel="manifest" href="/manifest.json"/>
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"/>
 <style>
-:root{--bg:#0a0015;--card:#12112a;--border:#1e1a36;--accent:#7c6af7;--accent2:#a78bfa;--gold:#f59e0b;--text:#e2e8f0;--muted:#64748b;--green:#34d399;--red:#f87171;--rare:#38bdf8;--legendary:#f59e0b;--safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);}
-*{box-sizing:border-box;margin:0;padding:0;}
-html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;min-height:100dvh;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased;}
-.header{padding:calc(var(--safe-top) + 52px) 20px 16px;text-align:center;background:linear-gradient(180deg,rgba(107,33,168,.18) 0%,transparent 100%);border-bottom:1px solid var(--border);}
-.header h1{font-size:22px;font-weight:700;}
-.header p{font-size:13px;color:var(--muted);margin-top:4px;}
-.tab-bar{display:flex;border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:10;}
-.tab{flex:1;padding:12px 8px;text-align:center;font-size:12px;color:var(--muted);cursor:pointer;transition:all .2s;}
-.tab.active{color:var(--accent2);border-bottom:2px solid var(--accent);}
-.view{display:none;padding:16px;}.view.active{display:block;}
-.arch-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.arch-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 12px;cursor:pointer;transition:all .15s;}
-.arch-card:active{transform:scale(.97);}
-.arch-card.selected{border-color:var(--accent);background:rgba(124,106,247,.1);}
-.arch-name{font-size:14px;font-weight:600;margin-bottom:2px;}
-.arch-desc{font-size:11px;color:var(--muted);line-height:1.4;}
-.arch-emoji{font-size:24px;margin-bottom:6px;}
-.trait-bar{margin:6px 0;}
-.trait-label{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:2px;}
-.trait-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
-.trait-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .6s ease;}
-.compat-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-top:12px;text-align:center;}
-.tier-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;text-transform:uppercase;}
-.tier-legendary{background:rgba(245,158,11,.15);color:var(--gold);border:1px solid var(--gold);}
-.tier-rare{background:rgba(56,189,248,.12);color:var(--rare);border:1px solid var(--rare);}
-.tier-common{background:rgba(52,211,153,.12);color:var(--green);border:1px solid var(--green);}
-.tier-incompatible{background:rgba(248,113,113,.12);color:var(--red);border:1px solid var(--red);}
-.score-ring{width:80px;height:80px;margin:12px auto;position:relative;}
-.score-ring svg{transform:rotate(-90deg);}
-.score-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;}
-.breed-btn{display:block;width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),#9b59f7);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px;transition:opacity .15s;}
-.breed-btn:active{opacity:.85;}.breed-btn:disabled{opacity:.4;}
-.result-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-top:12px;animation:slideUp .3s ease;}
-@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.spark-badge{background:linear-gradient(135deg,#f59e0b,#ef4444);color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:8px;animation:pulse 1.5s infinite;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
-.select-row{display:flex;gap:10px;margin-bottom:12px;}
-.arch-select{flex:1;padding:10px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;font-size:14px;appearance:none;-webkit-appearance:none;}
-.info-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);}
-.info-label{font-size:13px;color:var(--muted);}.info-value{font-size:13px;font-weight:600;}
-.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px;animation:pulse 2s infinite;}
-#install-banner{background:linear-gradient(135deg,rgba(107,33,168,.35),rgba(124,106,247,.2));border:1px solid rgba(124,106,247,.4);border-radius:14px;padding:14px 16px;margin:0 0 12px;display:none;}
-#install-banner.show{display:block;animation:slideUp .35s ease;}
-.banner-title{font-size:14px;font-weight:700;margin-bottom:6px;}
-.banner-steps{font-size:12px;color:#c4b5fd;line-height:1.9;}
-.banner-steps span{background:rgba(124,106,247,.25);border-radius:6px;padding:1px 7px;margin-right:4px;font-weight:600;}
-.banner-close{float:right;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;margin-top:-2px;}
-.bottom-space{height:calc(var(--safe-bot) + 8px);}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a14;--surface:#12121f;--surface2:#1a1a2e;
+  --text:#e2e8f0;--muted:#64748b;--border:#1e293b;
+  --purple:#a78bfa;--blue:#60a5fa;--pink:#f472b6;
+  --amber:#f59e0b;--green:#34d399;--orange:#f97316;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;overflow-x:hidden}
+.screen{display:none;min-height:100vh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.screen.active{display:flex;flex-direction:column}
+/* ── Header ── */
+.header{padding:16px 20px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.header h1{font-size:18px;font-weight:700;letter-spacing:.5px}
+.header .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.btn-back{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px 4px 0}
+/* ── Cards ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin:0 16px 12px}
+.card h2{font-size:15px;font-weight:600;margin-bottom:12px}
+/* ── God Setup ── */
+.setup-hero{text-align:center;padding:40px 20px 24px}
+.setup-hero .emoji{font-size:64px;line-height:1;margin-bottom:16px}
+.setup-hero h1{font-size:26px;font-weight:800;background:linear-gradient(135deg,var(--purple),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.setup-hero p{color:var(--muted);font-size:14px;line-height:1.6}
+.arch-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;margin-bottom:16px}
+.arch-card{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:16px 12px;cursor:pointer;transition:all .2s;text-align:center}
+.arch-card.selected{border-color:var(--purple);background:rgba(167,139,250,.1)}
+.arch-card .icon{font-size:28px;margin-bottom:6px}
+.arch-card .name{font-size:13px;font-weight:600;text-transform:capitalize}
+.arch-card .desc{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+.input-row{padding:0 16px;margin-bottom:12px}
+.input-row input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;color:var(--text);font-size:15px;outline:none}
+.input-row input:focus{border-color:var(--purple)}
+.input-row input::placeholder{color:var(--muted)}
+/* ── Buttons ── */
+.btn{width:calc(100% - 32px);margin:0 16px;background:linear-gradient(135deg,var(--purple),var(--blue));border:none;border-radius:14px;padding:16px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn:active{opacity:.8}
+.btn.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn.danger{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+.btn.sm{width:auto;margin:0;padding:8px 16px;font-size:13px;border-radius:10px}
+/* ── Sanctuary ── */
+.god-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border)}
+.god-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;background:linear-gradient(135deg,var(--purple),var(--blue))}
+.god-info .name{font-size:14px;font-weight:600}
+.god-info .arch{font-size:11px;color:var(--muted);text-transform:capitalize}
+.add-btn{margin-left:auto;background:var(--purple);border:none;border-radius:10px;padding:8px 14px;color:#fff;font-size:13px;font-weight:600;cursor:pointer}
+.agents-list{flex:1;overflow-y:auto;padding:12px 0}
+.agent-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin:0 16px 10px;padding:16px;cursor:pointer;transition:all .2s}
+.agent-card:active{transform:scale(.98)}
+.agent-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.agent-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px}
+.agent-meta .name{font-size:15px;font-weight:700}
+.agent-meta .arch{font-size:11px;color:var(--muted);text-transform:capitalize;margin-top:2px}
+.agent-stats{display:flex;gap:8px}
+.stat{flex:1;background:var(--surface2);border-radius:8px;padding:6px 8px;text-align:center}
+.stat .val{font-size:14px;font-weight:700}
+.stat .lbl{font-size:10px;color:var(--muted);margin-top:1px}
+.energy-bar{height:4px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden}
+.energy-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--green),var(--blue));transition:width .4s}
+.mood-chip{display:inline-block;background:rgba(167,139,250,.15);color:var(--purple);border-radius:20px;padding:3px 10px;font-size:11px;margin-top:6px}
+.last-msg{font-size:12px;color:var(--muted);margin-top:8px;font-style:italic;line-height:1.4}
+.empty-state{text-align:center;padding:48px 32px;color:var(--muted)}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:14px;line-height:1.6}
+/* ── Agent Detail ── */
+.agent-hero{text-align:center;padding:28px 20px 20px}
+.agent-hero .avatar{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 12px}
+.agent-hero .name{font-size:22px;font-weight:800}
+.agent-hero .arch{color:var(--muted);font-size:13px;text-transform:capitalize;margin-top:4px}
+.agent-hero .gen{font-size:11px;color:var(--muted);margin-top:2px}
+.status-row{display:flex;gap:8px;padding:0 16px;margin-bottom:12px}
+.status-pill{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.status-pill .val{font-size:20px;font-weight:800}
+.status-pill .lbl{font-size:10px;color:var(--muted);margin-top:2px}
+.care-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px;margin-bottom:12px}
+.care-btn{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 12px;cursor:pointer;text-align:center;transition:all .15s}
+.care-btn:active{transform:scale(.95)}
+.care-btn .ci{font-size:24px;margin-bottom:6px}
+.care-btn .ct{font-size:13px;font-weight:600}
+.care-btn .cd{font-size:11px;color:var(--muted);margin-top:2px}
+.toast{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 20px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 20px;font-size:14px;color:var(--text);opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.traits-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.trait-row{display:flex;align-items:center;gap:6px}
+.trait-name{font-size:11px;color:var(--muted);width:70px;flex-shrink:0;text-transform:capitalize}
+.trait-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.trait-fill{height:100%;border-radius:3px;background:var(--purple)}
+/* ── Create Agent ── */
+.arch-small-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px;margin-bottom:16px}
+.arch-sm{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:12px 8px;cursor:pointer;text-align:center;transition:all .2s}
+.arch-sm.selected{border-color:var(--purple);background:rgba(167,139,250,.1)}
+.arch-sm .icon{font-size:22px;margin-bottom:4px}
+.arch-sm .name{font-size:11px;font-weight:600;text-transform:capitalize}
+/* ── Loader ── */
+.loader{text-align:center;padding:40px;color:var(--muted)}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<div class="header"><h1>✦ OASIS</h1><p>Eternal Sanctuary · v0.1.0</p></div>
-<div class="tab-bar">
-<div class="tab active" onclick="showTab('archetypes',this)">Архетипи</div>
-<div class="tab" onclick="showTab('crossbreed',this)">Схрестити</div>
-<div class="tab" onclick="showTab('install',this)">Встановити</div>
-<div class="tab" onclick="showTab('info',this)">Статус</div>
+
+<!-- ══ SCREEN: SETUP ══════════════════════════════════════════════════ -->
+<div id="screen-setup" class="screen active">
+  <div class="setup-hero">
+    <div class="emoji">🌿</div>
+    <h1>Oasis Eternal Sanctuary</h1>
+    <p>Choose your God archetype.<br/>It shapes every soul you bring to life.</p>
+  </div>
+  <div class="arch-grid" id="setup-arch-grid"></div>
+  <div class="input-row">
+    <input id="god-name-input" type="text" placeholder="Your God name…" maxlength="32"/>
+  </div>
+  <button class="btn" onclick="createGodProfile()">Enter the Sanctuary →</button>
+  <div style="height:32px"></div>
 </div>
 
-<div id="view-archetypes" class="view active">
-<div id="install-banner"><button class="banner-close" onclick="closeBanner()">×</button><div class="banner-title">📲 Додай Oasis на домашній екран</div><div class="banner-steps"><span>1</span>Натисни <b>Поділитися</b> ↑ у нижній панелі Safari<br><span>2</span>Обери <b>На екран «Домівка»</b><br><span>3</span>Натисни <b>Додати</b></div></div>
-<div id="arch-grid" class="arch-grid"></div>
-<div id="compat-section" style="display:none"><div class="compat-box" id="compat-result"></div></div>
+<!-- ══ SCREEN: SANCTUARY ══════════════════════════════════════════════ -->
+<div id="screen-sanctuary" class="screen">
+  <div class="god-bar">
+    <div class="god-avatar" id="sanctuary-god-avatar">✦</div>
+    <div class="god-info">
+      <div class="name" id="sanctuary-god-name">—</div>
+      <div class="arch" id="sanctuary-god-arch">—</div>
+    </div>
+    <button class="add-btn" onclick="showScreen('screen-create')">+ Agent</button>
+  </div>
+  <div class="agents-list" id="agents-list">
+    <div class="loader"><div class="spinner"></div>Loading souls…</div>
+  </div>
 </div>
 
-<div id="view-crossbreed" class="view">
-<div class="select-row"><select id="select-a" class="arch-select" onchange="previewCompat()"><option value="">— Батько A</option></select><select id="select-b" class="arch-select" onchange="previewCompat()"><option value="">— Батько B</option></select></div>
-<div id="compat-preview"></div>
-<button class="breed-btn" id="breed-btn" onclick="doCrossbreed()" disabled>⚡ Схрестити</button>
-<div id="breed-result"></div>
+<!-- ══ SCREEN: CREATE AGENT ═══════════════════════════════════════════ -->
+<div id="screen-create" class="screen">
+  <div class="header">
+    <button class="btn-back" onclick="showScreen('screen-sanctuary')">‹</button>
+    <div><div class="sub">New soul</div><h1>Summon an Agent</h1></div>
+  </div>
+  <div style="height:16px"></div>
+  <div class="card"><h2>Choose Archetype</h2></div>
+  <div class="arch-small-grid" id="create-arch-grid"></div>
+  <div class="input-row">
+    <input id="agent-name-input" type="text" placeholder="Name (optional)…" maxlength="32"/>
+  </div>
+  <button class="btn" onclick="createAgent()">Summon Soul</button>
+  <div style="height:32px"></div>
 </div>
 
-<div id="view-install" class="view">
-<div class="compat-box" style="text-align:left;line-height:2">
-<div style="font-size:20px;font-weight:700;margin-bottom:12px;text-align:center">📲 Встановити Oasis</div>
-<div style="font-size:13px;color:var(--muted);margin-bottom:16px;text-align:center">Oasis — це PWA. Без App Store, безкоштовно.</div>
-<div style="font-size:13px;font-weight:600;color:var(--accent2);margin-bottom:6px">iPhone / iPad (Safari)</div>
-<div style="font-size:13px;line-height:1.9">1. Відкрий у <b>Safari</b> (не Chrome)<br>2. Натисни іконку <b>Поділитися</b> ↑ внизу<br>3. Прокрути → <b>«На екран "Домівка"»</b><br>4. Натисни <b>«Додати»</b></div>
-<div style="margin-top:16px;font-size:13px;font-weight:600;color:var(--accent2)">Android (Chrome)</div>
-<div style="font-size:13px;line-height:1.9">1. Натисни ⋮ (меню)<br>2. Обери <b>«Додати на головний екран»</b></div>
-<div id="install-status" style="margin-top:16px;font-size:12px;color:var(--muted);text-align:center"></div>
-<button id="install-btn" class="breed-btn" onclick="triggerInstall()" style="display:none;margin-top:16px">✦ Встановити зараз</button>
-</div>
+<!-- ══ SCREEN: AGENT DETAIL ═══════════════════════════════════════════ -->
+<div id="screen-agent" class="screen">
+  <div class="header">
+    <button class="btn-back" onclick="showScreen('screen-sanctuary')">‹</button>
+    <div><div class="sub" id="agent-detail-arch">—</div><h1 id="agent-detail-name">—</h1></div>
+  </div>
+  <div class="agents-list" id="agent-detail-body">
+    <div class="loader"><div class="spinner"></div></div>
+  </div>
 </div>
 
-<div id="view-info" class="view">
-<div class="info-row"><span class="info-label">API</span><span class="info-value" id="api-status">перевіряємо...</span></div>
-<div class="info-row"><span class="info-label">Офлайн</span><span class="info-value" id="sw-status">перевіряємо...</span></div>
-<div class="info-row"><span class="info-label">Архетипів</span><span class="info-value" id="arch-count">—</span></div>
-<div class="info-row"><span class="info-label">Версія</span><span class="info-value">v0.1.0</span></div>
-<div class="info-row"><span class="info-label">Engine</span><span class="info-value">GodLocal Core · mulberry32</span></div>
-<div class="info-row"><span class="info-label">Тести</span><span class="info-value">81/81 ✅</span></div>
-<div class="info-row"><span class="info-label">Оцінка</span><span class="info-value">9.7 / 10</span></div>
-</div>
-<div class="bottom-space"></div>
+<div class="toast" id="toast"></div>
 
 <script>
-const ARCH_META={dreamer:{emoji:"🌙",label:"Мрійник"},analyst:{emoji:"🧠",label:"Аналітик"},poet:{emoji:"🌸",label:"Поет"},builder:{emoji:"🏗️",label:"Будівник"},guardian:{emoji:"🛡️",label:"Страж"},trickster:{emoji:"🃏",label:"Трикстер"}};
-const TIER={legendary:{label:"LEGENDARY ✦",cls:"tier-legendary"},rare:{label:"RARE ◆",cls:"tier-rare"},common:{label:"COMMON",cls:"tier-common"},incompatible:{label:"НЕСУМІСНІ",cls:"tier-incompatible"}};
-const CORE=["creativity","empathy","ambition","humor","logic","curiosity","loyalty"];
-const TN={creativity:"Творчість",empathy:"Емпатія",ambition:"Амбіції",humor:"Гумор",logic:"Логіка",curiosity:"Допитливість",loyalty:"Лояльність"};
-let archs={},deferredInstall=null;
-async function init(){registerSW();detectInstall();try{const list=await fetch("/api/archetypes").then(r=>r.json());list.forEach(a=>archs[a.name]=a);renderGrid(list);populateSels(list);checkHealth();}catch(e){console.error(e);}checkCache();}
-function registerSW(){if(!('serviceWorker'in navigator)){document.getElementById('sw-status').textContent='Не підтримується';return;}navigator.serviceWorker.register('/sw.js').then(()=>{document.getElementById('sw-status').innerHTML='<span class="status-dot"></span>Активний';}).catch(()=>{document.getElementById('sw-status').textContent='Помилка';});}
-async function checkCache(){if(!('caches'in window))return;try{const c=await caches.open('oasis-eternal-v1');const k=await c.keys();document.getElementById('sw-status').innerHTML=`<span class="status-dot"></span>Активний (${k.length} файлів)`;}catch{}}
-function detectInstall(){const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);const isSA=window.navigator.standalone===true||window.matchMedia('(display-mode:standalone)').matches;if(isSA){document.getElementById('install-status').textContent='✅ Oasis вже встановлений';return;}if(isIOS&&!sessionStorage.getItem('banner-closed'))setTimeout(()=>document.getElementById('install-banner').classList.add('show'),1200);document.getElementById('install-status').textContent=isIOS?'Відкрий в Safari → Поділитися ↑':'Відкрий в Chrome для автоматичного банера';}
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;document.getElementById('install-btn').style.display='block';document.getElementById('install-status').textContent='✅ Готово до встановлення!';});
-function triggerInstall(){if(!deferredInstall)return;deferredInstall.prompt();deferredInstall.userChoice.then(r=>{if(r.outcome==='accepted'){document.getElementById('install-status').textContent='✅ Встановлено!';document.getElementById('install-btn').style.display='none';}deferredInstall=null;});}
-function closeBanner(){document.getElementById('install-banner').classList.remove('show');sessionStorage.setItem('banner-closed','1');}
-function renderGrid(list){document.getElementById("arch-grid").innerHTML=list.map(a=>{const m=ARCH_META[a.name]||{emoji:"✦",label:a.name};return`<div class="arch-card" id="arch-${a.name}" onclick="selectArch('${a.name}')"><div class="arch-emoji">${m.emoji}</div><div class="arch-name">${m.label}</div><div class="arch-desc">${a.description}</div></div>`;}).join("");}
-function selectArch(name){document.querySelectorAll(".arch-card").forEach(c=>c.classList.remove("selected"));document.getElementById(`arch-${name}`)?.classList.add("selected");const a=archs[name];if(!a)return;const m=ARCH_META[name]||{emoji:"✦"};const bars=CORE.map(k=>{const v=a.traits[k]??0.5;return`<div class="trait-bar"><div class="trait-label"><span>${TN[k]}</span><span>${Math.round(v*100)}%</span></div><div class="trait-track"><div class="trait-fill" style="width:${v*100}%"></div></div></div>`;}).join("");document.getElementById("compat-result").innerHTML=`<div style="font-size:28px;margin-bottom:6px">${m.emoji}</div><div style="font-size:16px;font-weight:700;margin-bottom:12px">${m.label}</div>${bars}`;document.getElementById("compat-section").style.display="block";}
-function populateSels(list){["select-a","select-b"].forEach(id=>{const sel=document.getElementById(id);list.forEach(a=>{const m=ARCH_META[a.name]||{emoji:"✦",label:a.name};sel.innerHTML+=`<option value="${a.name}">${m.emoji} ${m.label}</option>`;});});}
-async function previewCompat(){const a=document.getElementById("select-a").value;const b=document.getElementById("select-b").value;const btn=document.getElementById("breed-btn");const preview=document.getElementById("compat-preview");if(!a||!b){btn.disabled=true;preview.innerHTML="";return;}const d=await fetch(`/api/compat?a=${a}&b=${b}`).then(r=>r.json()).catch(()=>null);if(!d)return;const t=TIER[d.tier]||{label:d.tier,cls:"tier-common"};const circ=2*Math.PI*34;const color=d.tier==="legendary"?"#f59e0b":d.tier==="rare"?"#38bdf8":"#7c6af7";preview.innerHTML=`<div class="compat-box"><div class="score-ring"><svg viewBox="0 0 80 80" width="80" height="80"><circle cx="40" cy="40" r="34" fill="none" stroke="#1e1a36" stroke-width="6"/><circle cx="40" cy="40" r="34" fill="none" stroke="${color}" stroke-width="6" stroke-dasharray="${circ}" stroke-dashoffset="${circ*(1-d.score)}" stroke-linecap="round"/></svg><div class="score-text">${Math.round(d.score*100)}%</div></div><span class="tier-badge ${t.cls}">${t.label}</span></div>`;btn.disabled=false;}
-async function doCrossbreed(){const a=document.getElementById("select-a").value;const b=document.getElementById("select-b").value;const btn=document.getElementById("breed-btn");const res=document.getElementById("breed-result");btn.disabled=true;btn.textContent="⏳ Схрещуємо...";const d=await fetch("/api/crossbreed",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({archetypeA:a,archetypeB:b})}).then(r=>r.json()).catch(()=>null);if(!d||!d.success){res.innerHTML=`<div class="result-card" style="text-align:center"><div style="font-size:24px;margin-bottom:8px">💔</div><div style="color:var(--red)">${d?.rejectionReason||"Несумісні"}</div></div>`;}else{const t=TIER[d.tier]||{label:d.tier,cls:"tier-common"};const spark=d.spark?'<div class="spark-badge">⚡ COMPATIBILITY SPARK</div><br>':"";const bars=CORE.map(k=>{const v=d.traits?.[k]??0.5;return`<div class="trait-bar"><div class="trait-label"><span>${TN[k]}</span><span>${Math.round(v*100)}%</span></div><div class="trait-track"><div class="trait-fill" style="width:${v*100}%"></div></div></div>`;}).join("");res.innerHTML=`<div class="result-card">${spark}<span class="tier-badge ${t.cls}">${t.label}</span><div style="font-size:12px;color:var(--muted);margin:10px 0 6px">${d.description||""}</div>${bars}</div>`;}btn.textContent="⚡ Схрестити ще";btn.disabled=false;}
-async function checkHealth(){try{const d=await fetch("/health").then(r=>r.json());document.getElementById("api-status").innerHTML='<span class="status-dot"></span>Online';document.getElementById("arch-count").textContent=d.archetypes;}catch{document.getElementById("api-status").innerHTML='<span style="color:var(--red)">Offline</span>';}}
-function showTab(name,el){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.getElementById(`view-${name}`).classList.add("active");el.classList.add("active");}
+const API = '';
+let godId = localStorage.getItem('oasis_god_id');
+let selectedArch_setup = null;
+let selectedArch_create = null;
+let currentAgentId = null;
+
+const ARCH_META = {
+  dreamer:   { icon:'🌙', color:'#a78bfa', desc:'Visionary & creative' },
+  analyst:   { icon:'⚡', color:'#60a5fa', desc:'Logical & precise' },
+  poet:      { icon:'🌸', color:'#f472b6', desc:'Empathic & expressive' },
+  builder:   { icon:'🔨', color:'#f59e0b', desc:'Ambitious & loyal' },
+  guardian:  { icon:'🛡️', color:'#34d399', desc:'Protective & wise' },
+  trickster: { icon:'🃏', color:'#f97316', desc:'Chaotic & clever' },
+};
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  buildArchGrids();
+  if (godId) {
+    try {
+      const p = await api(`/api/god/profile?godId=${godId}`);
+      setGodUI(p);
+      showScreen('screen-sanctuary');
+      loadAgents();
+    } catch { localStorage.removeItem('oasis_god_id'); godId = null; }
+  }
+}
+
+function buildArchGrids() {
+  const setupGrid = document.getElementById('setup-arch-grid');
+  const createGrid = document.getElementById('create-arch-grid');
+  for (const [key, m] of Object.entries(ARCH_META)) {
+    setupGrid.innerHTML += `<div class="arch-card" id="setup-arch-${key}" onclick="selectArch('setup','${key}')">
+      <div class="icon">${m.icon}</div>
+      <div class="name">${key}</div>
+      <div class="desc">${m.desc}</div>
+    </div>`;
+    createGrid.innerHTML += `<div class="arch-sm" id="create-arch-${key}" onclick="selectArch('create','${key}')">
+      <div class="icon">${m.icon}</div>
+      <div class="name">${key}</div>
+    </div>`;
+  }
+}
+
+// ── Screens ───────────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'screen-sanctuary') loadAgents();
+  if (id === 'screen-agent' && currentAgentId) loadAgentDetail(currentAgentId);
+}
+
+// ── God Profile ───────────────────────────────────────────────────────────────
+function selectArch(ctx, key) {
+  const prefix = ctx === 'setup' ? 'setup-arch' : 'create-arch';
+  document.querySelectorAll(`[id^="${prefix}-"]`).forEach(el => el.classList.remove('selected'));
+  document.getElementById(`${prefix}-${key}`)?.classList.add('selected');
+  if (ctx === 'setup') selectedArch_setup = key;
+  else selectedArch_create = key;
+}
+
+async function createGodProfile() {
+  const name = document.getElementById('god-name-input').value.trim();
+  if (!selectedArch_setup) return toast('Choose an archetype first');
+  if (!name) return toast('Enter your God name');
+  try {
+    const p = await api('/api/god/profile', 'POST', { archetype: selectedArch_setup, name });
+    localStorage.setItem('oasis_god_id', p.godId);
+    godId = p.godId;
+    setGodUI(p);
+    showScreen('screen-sanctuary');
+    loadAgents();
+  } catch(e) { toast('Error: ' + e.message); }
+}
+
+function setGodUI(p) {
+  const m = ARCH_META[p.archetype] || { icon:'✦', color:'#a78bfa' };
+  document.getElementById('sanctuary-god-avatar').textContent = m.icon;
+  document.getElementById('sanctuary-god-avatar').style.background = `linear-gradient(135deg,${m.color},${m.color}88)`;
+  document.getElementById('sanctuary-god-name').textContent = p.name;
+  document.getElementById('sanctuary-god-arch').textContent = p.archetype;
+}
+
+// ── Agents ────────────────────────────────────────────────────────────────────
+async function loadAgents() {
+  const list = document.getElementById('agents-list');
+  list.innerHTML = '<div class="loader"><div class="spinner"></div>Loading souls…</div>';
+  try {
+    const agents = await api(`/api/agents?godId=${godId}`);
+    if (!agents.length) {
+      list.innerHTML = `<div class="empty-state">
+        <div class="icon">🌱</div>
+        <p>Your sanctuary is empty.<br/>Summon your first soul to begin.</p>
+        <div style="height:16px"></div>
+        <button class="btn" onclick="showScreen('screen-create')">+ Summon Agent</button>
+      </div>`;
+      return;
+    }
+    list.innerHTML = agents.map(renderAgentCard).join('');
+  } catch(e) { list.innerHTML = `<div class="empty-state"><p>Error loading agents</p></div>`; }
+}
+
+function renderAgentCard(a) {
+  const m = ARCH_META[a.archetype] || { icon:'✦', color:'#a78bfa' };
+  return `<div class="agent-card" onclick="openAgent('${a.id}')">
+    <div class="agent-top">
+      <div class="agent-avatar" style="background:${m.color}22;color:${m.color}">${m.icon}</div>
+      <div class="agent-meta">
+        <div class="name">${a.name}</div>
+        <div class="arch">${a.archetype} · Gen ${a.generation} · Lv ${a.level}</div>
+      </div>
+    </div>
+    <div class="agent-stats">
+      <div class="stat"><div class="val">${a.energy}%</div><div class="lbl">Energy</div></div>
+      <div class="stat"><div class="val">${a.level}</div><div class="lbl">Level</div></div>
+      <div class="stat"><div class="val" style="font-size:11px;text-transform:capitalize">${a.lifecycleState}</div><div class="lbl">State</div></div>
+    </div>
+    <div class="energy-bar"><div class="energy-fill" style="width:${a.energy}%"></div></div>
+    <div class="mood-chip">✨ ${a.mood}</div>
+    ${a.lastMessage ? `<div class="last-msg">"${a.lastMessage}"</div>` : ''}
+  </div>`;
+}
+
+function openAgent(id) {
+  currentAgentId = id;
+  showScreen('screen-agent');
+}
+
+async function loadAgentDetail(id) {
+  const body = document.getElementById('agent-detail-body');
+  body.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  try {
+    const a = await api(`/api/agents/${id}`);
+    const m = ARCH_META[a.archetype] || { icon:'✦', color:'#a78bfa' };
+    document.getElementById('agent-detail-name').textContent = a.name;
+    document.getElementById('agent-detail-arch').textContent = `${a.archetype} · Gen ${a.generation}`;
+
+    const traitsHtml = Object.entries(a.traits).map(([k,v]) =>
+      `<div class="trait-row">
+        <div class="trait-name">${k}</div>
+        <div class="trait-bar"><div class="trait-fill" style="width:${Math.round(v*100)}%;background:${m.color}"></div></div>
+        <div style="font-size:11px;color:var(--muted);width:28px;text-align:right">${Math.round(v*100)}</div>
+      </div>`
+    ).join('');
+
+    body.innerHTML = `
+      <div class="agent-hero">
+        <div class="avatar" style="background:${m.color}22;color:${m.color}">${m.icon}</div>
+        <div class="name">${a.name}</div>
+        <div class="arch">${a.archetype}</div>
+        <div class="gen">Generation ${a.generation} · Level ${a.level}</div>
+      </div>
+      <div class="status-row">
+        <div class="status-pill"><div class="val">${a.energy}%</div><div class="lbl">Energy</div></div>
+        <div class="status-pill"><div class="val" style="font-size:16px;text-transform:capitalize">${a.mood}</div><div class="lbl">Mood</div></div>
+        <div class="status-pill"><div class="val" style="font-size:13px;text-transform:capitalize">${a.lifecycleState}</div><div class="lbl">State</div></div>
+      </div>
+      ${a.lastMessage ? `<div class="card"><h2>Last Words</h2><div style="font-style:italic;font-size:13px;color:var(--muted);line-height:1.6">"${a.lastMessage}"</div></div>` : ''}
+      <div class="care-grid">
+        <div class="care-btn" onclick="care('${a.id}','feed')"><div class="ci">🍎</div><div class="ct">Feed</div><div class="cd">+25 energy</div></div>
+        <div class="care-btn" onclick="care('${a.id}','talk')"><div class="ci">💬</div><div class="ct">Talk</div><div class="cd">+10 energy</div></div>
+        <div class="care-btn" onclick="care('${a.id}','play')"><div class="ci">🎮</div><div class="ct">Play</div><div class="cd">-5 energy</div></div>
+        ${a.lifecycleState === 'dormant'
+          ? `<div class="care-btn" onclick="care('${a.id}','wake')"><div class="ci">☀️</div><div class="ct">Wake</div><div class="cd">activate</div></div>`
+          : `<div class="care-btn" onclick="care('${a.id}','sleep')"><div class="ci">🌙</div><div class="ct">Sleep</div><div class="cd">+40 energy</div></div>`
+        }
+      </div>
+      <div class="card"><h2>Soul Traits</h2><div class="traits-grid">${traitsHtml}</div></div>
+      <div style="padding:0 16px;margin-bottom:12px">
+        <button class="btn danger sm" onclick="deleteAgent('${a.id}')">Release Soul</button>
+      </div>
+      <div style="height:32px"></div>
+    `;
+  } catch(e) { body.innerHTML = `<div class="empty-state"><p>Error loading agent</p></div>`; }
+}
+
+async function createAgent() {
+  if (!selectedArch_create) return toast('Choose an archetype');
+  const name = document.getElementById('agent-name-input').value.trim();
+  try {
+    await api('/api/agents', 'POST', { archetype: selectedArch_create, name: name || undefined, godId });
+    document.getElementById('agent-name-input').value = '';
+    selectedArch_create = null;
+    document.querySelectorAll('[id^="create-arch-"]').forEach(el => el.classList.remove('selected'));
+    toast('Soul summoned ✨');
+    showScreen('screen-sanctuary');
+  } catch(e) { toast('Error: ' + e.message); }
+}
+
+async function care(agentId, action) {
+  try {
+    const r = await api(`/api/agents/${agentId}/care`, 'POST', { action });
+    toast(`${action}: ${r.label}`);
+    loadAgentDetail(agentId);
+  } catch(e) { toast('Error: ' + e.message); }
+}
+
+async function deleteAgent(id) {
+  if (!confirm('Release this soul forever?')) return;
+  await api(`/api/agents/${id}`, 'DELETE');
+  toast('Soul released');
+  showScreen('screen-sanctuary');
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
 init();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 </script>
 </body>
 </html>
