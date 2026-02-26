@@ -835,7 +835,7 @@ async function addScheduleTask() {
 async function runScheduleNow() {
   const r = await fetch('/api/schedule/run', { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' });
   const d = await r.json();
-  alert('Выполнено задач: ' + d.ran + (d.results ? '\n' + d.results.map(x=>x.platform+': '+x.status).join('\n') : ''));
+  alert('Выполнено задач: ' + d.ran + (d.results ? ' | ' + d.results.map(x=>x.platform+': '+x.status).join(' | ') : ''));
   loadSchedule();
 }
 
@@ -866,7 +866,7 @@ route('GET', '/', (req, res) => {
 });
 
 route('GET', '/health', (req, res) => send(res, 200, {
-  status: 'ok', version: '1.0.1',
+  status: 'ok', version: '1.0.2',
   groq: !!GROQ_KEY, gemini: !!GEMINI_KEY, composio: !!COMPOSIO_KEY,
   tools: Object.keys(AGENT_TOOLS).filter(t => t !== 'none'),
 }));
