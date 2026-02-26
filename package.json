@@ -1,0 +1,35 @@
+{
+  "name": "oasis-eternal-sanctuary",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GodLocal × AI tamagotchi-civilization engine",
+  "scripts": {
+    "start": "ts-node --skip-project --compiler-options '{\"module\":\"commonjs\",\"strict\":false}' packages/server/index.ts",
+    "dev": "npm start",
+    "test": "jest --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fastify": "^4.28.0",
+    "@fastify/static": "^7.0.4"
+  },
+  "devDependencies": {
+    "@types/jest": "29.5.12",
+    "@types/node": "20.11.0",
+    "jest": "29.7.0",
+    "ts-jest": "29.1.4",
+    "ts-node": "10.9.2",
+    "typescript": "5.3.3"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": ["**/tests/**/*.test.ts"],
+    "moduleNameMapper": {
+      "^../shared-types$": "<rootDir>/packages/shared-types/index.ts",
+      "^../shared-types/index$": "<rootDir>/packages/shared-types/index.ts",
+      "^../runtime/config$": "<rootDir>/packages/runtime/config.ts",
+      "^../runtime/logger$": "<rootDir>/packages/runtime/logger.ts"
+    }
+  }
+}
