@@ -237,9 +237,12 @@ async function composioAction(actionSlug, connectedAccountId, input) {
   if (!COMPOSIO_KEY) return { ok: false, error: 'COMPOSIO_API_KEY not set' };
   try {
     const composio = getComposio();
-    const result   = await composio.actions.execute({
-      actionName:  actionSlug,
-      requestBody: { connectedAccountId, input },
+    // Use entity.execute — it resolves appKey and connectedAccount automatically
+    const entity = composio.getEntity('default');
+    const result  = await entity.execute({
+      actionName:        actionSlug,
+      params:            input,
+      connectedAccountId,
     });
     return { ok: true, data: result };
   } catch (e) {
