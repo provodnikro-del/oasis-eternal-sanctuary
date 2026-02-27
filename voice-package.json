@@ -1,0 +1,16 @@
+{
+  "name": "provodnikro-voice-bot",
+  "version": "2.0.0",
+  "description": "Jarvis Voice Agent v2 for @Provodnikro_bot — X100 OASIS",
+  "main": "voice-bot-v2.js",
+  "scripts": {
+    "start": "node voice-bot-v2.js",
+    "dev": "node --watch voice-bot-v2.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.4.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
