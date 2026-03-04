@@ -219,7 +219,7 @@
       <div class="quick-btn" onclick="quickAsk('&#1094;&#1077;&#1083;&#1080;')">&#127919; &#1062;&#1077;&#1083;&#1080;</div>
       <div class="quick-btn" onclick="quickAsk('&#1079;&#1072;&#1076;&#1072;&#1095;&#1080;')">&#9989; &#1047;&#1072;&#1076;&#1072;&#1095;&#1080;</div>
       <div class="quick-btn" onclick="quickAsk('&#1089;&#1090;&#1072;&#1090;&#1091;&#1089;')">&#128202; &#1057;&#1090;&#1072;&#1090;&#1091;&#1089;</div>
-      <div class="quick-btn" onclick="openConfig()">&#9881;&#65039; API</div>
+      
     </div>
     <div id="input-row">
       <button class="input-btn" id="voice-btn" onclick="toggleVoice()">&#127908;</button>
@@ -228,27 +228,12 @@
     </div>
   </div>
 </div>
-<div id="config-overlay" onclick="closeConfigIfOutside(event)">
-  <div id="config-panel">
-    <button id="config-close" onclick="closeConfig()">&#10005;</button>
-    <h2>&#9881;&#65039; &#1053;&#1072;&#1089;&#1090;&#1088;&#1086;&#1081;&#1082;&#1080; API</h2>
-    <div class="config-row">
-      <div class="config-label">Gemini API Key</div>
-      <input class="config-input" id="cfg-gemini" type="password" placeholder="AIza..." />
-    </div>
-    <div class="config-row">
-      <div class="config-label">Backend URL</div>
-      <input class="config-input" id="cfg-backend" type="text" placeholder="https://x100-voice.onrender.com" />
-    </div>
-    <button id="config-save" onclick="saveConfig()">&#128190; &#1057;&#1086;&#1093;&#1088;&#1072;&#1085;&#1080;&#1090;&#1100;</button>
-  </div>
-</div>
 <div id="toast"></div>
 <script>
 'use strict';
 const S={
   archetype:localStorage.getItem('arch')||'conductor',
-  geminiKey:localStorage.getItem('gemini')||'',
+  
   backendUrl:localStorage.getItem('backend')||'',
   history:JSON.parse(localStorage.getItem('hist')||'[]'),
   notes:JSON.parse(localStorage.getItem('notes')||'[]'),
@@ -357,34 +342,24 @@ async function geminiCall(prompt,maxT,temp){
   const d=await r.json();return d?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()||'';
 }
 async function thinkAgent(userText){
-  const a=ARCH[S.archetype];const x100d=getX100Day();
-  const hist=S.history.slice(-4).map(h=>`${h.role==='user'?'Ростислав':a.name}: ${h.text}`).join('
-');
-  setThkStep('Анализирую намерение...');
-  let analysis=null;
-  try{
-    const raw=await geminiCall(`Анализируй. Верни ТОЛЬКО JSON без markdown:
-{"intent":"задача|рефлексия|вопрос|инсайт|эмоция|крипто|проект","energy":"высокая|нейтральная|низкая","real_need":"одна фраза","project_link":"x100|oasis|godlocal|crypto|нет","action_item":"задача или null","response_style":"мотивировать|направить|проанализировать|создать|кратко","key_insight":"инсайт или null"}
-Сообщение: "${userText}"
-X100: ${x100d?'день '+x100d+'/100':'не запущен'}
-История: ${hist||'(начало)'}`,200,0.1);
-    const m=raw.match(/\{[\s\S]*\}/);if(m)analysis=JSON.parse(m[0]);
-  }catch(e){}
-  setThkStep('Генерирую ответ '+a.name+'а...');
-  const ins=analysis?.key_insight?'
-Инсайт: '+analysis.key_insight:'';
-  const nee=analysis?.real_need?'
-Реальная нужда: '+analysis.real_need:'';
-  const sty=analysis?.response_style?'
-Стиль: '+analysis.response_style:'';
-  const reply=await geminiCall(`${a.system}
-${CTX}
-X100: ${x100d?'день '+x100d+'/100':'не запущен'}${ins}${nee}${sty}
-Правила: 2-3 предложения. Без "Конечно!", "Отлично!". Язык как пишет юзер. Действие не теория.
-История: ${hist||'(начало)'}
-Ростислав: "${userText}"
-${a.name}:`,280,0.88);
-  return{reply,analysis};
+  const a=ARCH[S.archetype];
+  const hist=S.history.slice(-8).map(h=>({role:h.role==='user'?'user':'agent',text:h.text}));
+  setThkStep('Думаю...');
+  const backendUrl=(S.backendUrl||'').replace(/\/$/,'');
+  const endpoint=backendUrl?backendUrl+'/api/chat':'/api/chat';
+  const r=await fetch(endpoint,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      agentId:S.archetype,
+      message:userText,
+      archetype:S.archetype,
+      history:hist
+    })
+  });
+  if(!r.ok){const e=await r.text();throw new Error('API '+r.status+': '+e.slice(0,120));}
+  const d=await r.json();
+  return{reply:d.reply,analysis:null};
 }
 function saveTodo(t){
   S.todos.unshift({text:t,done:false,ts:Date.now()});
@@ -447,19 +422,10 @@ async function toggleVoice(){
     rec.start();S.mediaRec=rec;S.recording=true;document.getElementById('voice-btn').classList.add('recording');
   }catch(e){toast('⚠️ Нет доступа к микрофону');}
 }
-function openConfig(){
-  document.getElementById('cfg-gemini').value=S.geminiKey||'';
-  document.getElementById('cfg-backend').value=S.backendUrl||'';
-  document.getElementById('config-overlay').classList.add('open');
-}
-function closeConfig(){document.getElementById('config-overlay').classList.remove('open');}
-function closeConfigIfOutside(e){if(e.target===document.getElementById('config-overlay'))closeConfig();}
-function saveConfig(){
-  S.geminiKey=document.getElementById('cfg-gemini').value.trim();
-  S.backendUrl=document.getElementById('cfg-backend').value.trim();
-  localStorage.setItem('gemini',S.geminiKey);localStorage.setItem('backend',S.backendUrl);
-  closeConfig();toast('✅ Сохранено');
-}
+/* config removed */
+/* config removed */
+/* config removed */
+/* config removed */
 let toastT;
 function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),2500);}
 document.addEventListener('click',e=>{
