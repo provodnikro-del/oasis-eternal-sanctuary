@@ -334,6 +334,63 @@ async function callGemini(prompt) {
 }
 
 // ─── Composio SDK helper ─────────────────────────────────────────────────────
+
+// ─── /api/chat — HTTP chat endpoint (фронтенд без ключа) ──────────────────
+route('POST', '/api/chat', async (req, res) => {
+  const body = await readBody(req);
+  let data;
+  try { data = JSON.parse(body); } catch(e) { return send(res, 400, { error: 'Bad JSON' }); }
+  const { agentId, message, archetype, history } = data;
+
+  // Load or build agent context
+  const s = loadStore();
+  let agent = s.agents?.[agentId];
+  if (!agent) {
+    // Fallback: build minimal agent from archetype
+    const arch = archetype || 'conductor';
+    const archDef = ARCHETYPES[arch] || ARCHETYPES.conductor;
+    agent = {
+      id: agentId || 'default',
+      name: archDef.name,
+      archetype: arch,
+      traits: archDef.traits,
+      mood: 'calm',
+      karma: 0,
+      bond: 50,
+      level: 1,
+      memory: (history || []).slice(-8).map(h => ({ role: h.role, text: h.text, emotion: 'neutral' })),
+    };
+  } else {
+    // Inject history context if provided
+    if (history && history.length > 0) {
+      agent.memory = (history || []).slice(-8).map(h => ({ role: h.role, text: h.text, emotion: 'neutral' }));
+    }
+  }
+
+  const wev = getWorldEvent(s);
+  const prompt = buildChatPrompt(agent, message, wev);
+
+  let reply = null;
+  if (GROQ_KEY) reply = await callGroq(prompt);
+  if (!reply && GEMINI_KEY) reply = await callGemini(prompt);
+  if (!reply) {
+    const archDef = ARCHETYPES[agent.archetype] || ARCHETYPES.conductor;
+    reply = archDef.phrases[Math.floor(Math.random() * archDef.phrases.length)];
+  }
+
+  // Update agent memory and save
+  if (s.agents?.[agentId]) {
+    addMemory(agent, 'user', message, 'neutral');
+    addMemory(agent, 'agent', reply, 'neutral');
+    agent.bond = Math.min(100, (agent.bond || 50) + 1);
+    agent.lastInteraction = Date.now();
+    s.agents[agentId] = agent;
+    saveStore(s);
+  }
+
+  send(res, 200, { reply, mood: agent.mood, bond: agent.bond });
+});
+
 async function composioAction(actionSlug, connectedAccountId, input) {
   if (!COMPOSIO_KEY) return { ok: false, error: 'COMPOSIO_API_KEY not set' };
   try {
